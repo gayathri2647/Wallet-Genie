@@ -1,0 +1,6 @@
+Firestore Root
+└── users (collection)
+    └── user_id (document)
+        └── transactions (subcollection)
+            ├── tx1 (document)
+            ├── tx2 (document)
