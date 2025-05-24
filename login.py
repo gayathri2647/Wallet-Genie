@@ -13,7 +13,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 # Initialize Firebase Admin SDK (for backend operations)
 try:
-    cred = credentials.Certificate("wallet-3f13a-d7fbf39fbb1b.json")
+    cred = credentials.Certificate("firebase_key.json")   #firebase_key = wallet-3f13a-d7fbf39fbb1b
     firebase_admin.initialize_app(cred)
 except ValueError:
     # App already initialized
@@ -109,7 +109,7 @@ def login_user(email, password):
         st.balloons()
         
         # Redirect to the dashboard page
-        st.switch_page("pages/Dashboard.py")
+        st.switch_page("pages/2_Dashboard.py")
     except Exception as e:
         st.error(f"Login failed: {e}")
         st.session_state.authentication_status = False
@@ -145,24 +145,24 @@ def display_logged_in_ui():
     st.write(f"Logged in as: {st.session_state.user_info['email']}")
     st.write(f"Last login: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     
-    # Navigation buttons
-    col1, col2, col3, col4 = st.columns(4)
+    # # Navigation buttons
+    # col1, col2, col3, col4 = st.columns(4)
     
-    with col1:
-        if st.button("Dashboard", use_container_width=True):
-            st.switch_page("pages/Dashboard.py")
+    # with col1:
+    #     if st.button("Dashboard", use_container_width=True):
+    #         st.switch_page("pages/Dashboard.py")
     
-    with col2:
-        if st.button("New Transaction", use_container_width=True):
-            st.switch_page("pages/New Transactions.py")
+    # with col2:
+    #     if st.button("New Transaction", use_container_width=True):
+    #         st.switch_page("pages/New Transactions.py")
     
-    with col3:
-        if st.button("History", use_container_width=True):
-            st.switch_page("pages/Transactions History.py")
+    # with col3:
+    #     if st.button("History", use_container_width=True):
+    #         st.switch_page("pages/Transactions History.py")
     
-    with col4:
-        if st.button("Statistics", use_container_width=True):
-            st.switch_page("pages/Statistics.py")
+    # with col4:
+    #     if st.button("Statistics", use_container_width=True):
+    #         st.switch_page("pages/Statistics.py")
     
     # Logout button
     if st.button("Logout", use_container_width=True):
