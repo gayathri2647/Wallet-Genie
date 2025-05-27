@@ -3,5 +3,9 @@ anything between this kind of hastags, do not touch it
 #####################################
 
 create a frontend to let the user define Categories
+like a settings button on the top right when i clicked it it shows bunch of options 
+one of them being  "Config Transaction type" when i clicked 
+it'll display the existing Transaction types and a grayed out "Add Transaction type" button
+atmost 10 types can be added for expense and another 10 for income
 
 the dashboard have lots of empty spaces, so fill it with the diagrams from the page "Reports & Charts"
