@@ -74,7 +74,7 @@ if submit_button:
         st.json({
             "description": description,
             "amount": amount,
-            "date": date.strftime("%Y-%m-%d"),
+            "date": date.strftime("%m/%d/%Y"),
             "type": transaction_type,
             "category": category,
             "user": get_username()
@@ -84,7 +84,7 @@ if submit_button:
         doc_ref.set({
             "description": description,
             "amount": amount,
-            "date": date.strftime("%Y-%m-%d"),
+            "date": date.strftime("%m/%d/%Y"),
             "type": transaction_type,
             "category": category
         })

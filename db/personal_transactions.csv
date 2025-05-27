@@ -1,4 +1,4 @@
-Date,Description,Amount,Transaction Type,Category,Account Name
+date,description,amount,transaction Type,category,account Name
 01/01/2018,Amazon,11.11,debit,Shopping,Platinum Card
 01/02/2018,Mortgage Payment,1247.44,debit,Mortgage & Rent,Checking
 01/02/2018,Thai Restaurant,24.22,debit,Restaurants,Silver Card

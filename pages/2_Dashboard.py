@@ -58,7 +58,6 @@ tx_data = get_user_transactions(user_id)
 
 # Convert to DataFrame
 df = pd.DataFrame(tx_data)
-# print(df)
 
 # Make sure 'amount', 'type', and 'date' columns exist
 if not df.empty and all(col in df.columns for col in ['amount', 'type', 'date']):
@@ -66,10 +65,12 @@ if not df.empty and all(col in df.columns for col in ['amount', 'type', 'date'])
     df['amount'] = pd.to_numeric(df['amount'], errors='coerce')
     df['date'] = pd.to_datetime(df['date'], errors='coerce')
     df['type'] = df['type'].str.lower().str.strip()  # make sure type is lowercase for comparison
+    # Drop rows with invalid dates or missing amounts/types
+
     # 2. Filter for current month and year
     now = pd.Timestamp.now()
     current_month_df = df[(df['date'].dt.month == now.month) & (df['date'].dt.year == now.year)]
-
+     
     # 3. Calculate totals
     monthly_income = current_month_df[current_month_df['type'] == 'income']['amount'].sum()
     monthly_spend = current_month_df[current_month_df['type'] == 'expense']['amount'].sum()
@@ -137,7 +138,7 @@ last_week = today - pd.Timedelta(days=6)
 df_week = df_expenses[(df_expenses['date'] >= last_week) & (df_expenses['date'] <= today)]
 
 # Create 'only_date' column from datetime (date only, no time)
-df_week['only_date'] = df_week['date'].dt.date  # This line must be present before groupby
+df_week.loc[:, 'only_date'] = df_week['date'].dt.date  # This line must be present before groupby
 
 # Group by 'only_date' and sum amounts
 df_trend = df_week.groupby('only_date', as_index=False)['amount'].sum()
