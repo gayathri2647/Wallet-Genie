@@ -30,6 +30,7 @@ CUSTOM_CSS = """
         padding: 15px;
         border-radius: 5px;
         border-left: 5px solid #ff6b6b;
+        color: black;
     }
     .budget-card {
         background-color: #ffffff;

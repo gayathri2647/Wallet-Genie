@@ -48,7 +48,7 @@ with st.form("transaction_form"):
  
     col1, col2 = st.columns(2)
     with col1:
-        amount = st.number_input("Amount ($)", min_value=0.01, format="%0.2f")
+        amount = st.number_input("Amount ($)", min_value=1.00, format="%0.2f")
     with col2:
         date = st.date_input("Date", value=datetime.now())
     

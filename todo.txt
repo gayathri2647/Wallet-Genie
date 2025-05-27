@@ -1,0 +1,7 @@
+######################################
+anything between this kind of hastags, do not touch it 
+#####################################
+
+create a frontend to let the user define Categories
+
+the dashboard have lots of empty spaces, so fill it with the diagrams from the page "Reports & Charts"
