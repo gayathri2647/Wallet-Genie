@@ -15,7 +15,10 @@ check_auth()
 
 db = init_firestore()
 
+# --- IMPORTANT: Replace with dynamic user ID ---
 user_id = "yugesh_demo_uid"
+# --- End of IMPORTANT ---
+
 # Page config
 st.set_page_config(
     page_title="Add Transaction - WalletGenie",
@@ -38,47 +41,69 @@ st.markdown("""
 
 st.title("Add New Transaction 💰")
 
+# Function to fetch categories from Firestore.
+# This function is duplicated here for simplicity. In a larger app, consider
+# moving it to a shared utility file (e.g., `utils.py`) and importing it.
+@st.cache_data(ttl=60) # Cache the categories for 60 seconds
+def get_categories(uid):
+    doc_ref = db.collection("users").document(uid)
+    doc = doc_ref.get()
+    if doc.exists:
+        data = doc.to_dict()
+        return data.get("categories", {"expense": [], "income": []})
+    return {"expense": [], "income": []}
+
+user_categories = get_categories(user_id)
+# Default categories to fall back on if the user hasn't defined any custom ones
+default_expense_categories = ["Food & Dining", "Transportation", "Shopping", "Entertainment", "Bills & Utilities", "Education", "Health", "Personal Care", "Others"]
+default_income_categories = ["Salary", "Freelance", "Investment Returns", "Gift", "Bonus", "Rental Income", "Refunds", "Other Income"]
+
+
+expense_categories = user_categories.get("expense", [])
+if not expense_categories: # If no custom expense categories, use defaults
+    expense_categories = default_expense_categories
+
+income_categories = user_categories.get("income", [])
+if not income_categories: # If no custom income categories, use defaults
+    income_categories = default_income_categories
+
+
 # Transaction form
 with st.form("transaction_form"):
     transaction_type = st.selectbox("Type", ["Expense", "Income"])
-    
-    category =  st.selectbox("Category", ["Food & Dining", "Transportation", "Shopping", "Entertainment", "Bills & Utilities"])
-    
+
+    # Dynamically change category options based on transaction type
+    if transaction_type == "Expense":
+        category_options = expense_categories
+    else:
+        category_options = income_categories
+
+    category =  st.selectbox("Category", category_options) # Use dynamic categories
+
     description = st.text_area("Description", height=90, placeholder="Enter transaction description")
- 
+
     col1, col2 = st.columns(2)
     with col1:
         amount = st.number_input("Amount ($)", min_value=1.00, format="%0.2f")
     with col2:
         date = st.date_input("Date", value=datetime.now())
-    
+
     submit_button = st.form_submit_button("Add Transaction")
 
 # Handle form submission
 if submit_button:
     if description and amount:
-        
-        # Display prediction
+
+        # Display prediction (using selected category for now)
         st.markdown(f"""
             <div class="prediction-card">
             <h4>🤖 AI Category Prediction</h4>
             Category: <b>{category}</b><br>
             </div>
         """, unsafe_allow_html=True)
-        
-        # Mock API call
+
         st.success("Transaction added successfully!")
-        
-        # Show what would be sent to backend
-        #st.write("Transaction Details:")
-        st.json({
-            "description": description,
-            "amount": amount,
-            "date": date.strftime("%m/%d/%Y"),
-            "type": transaction_type,
-            "category": category,
-            "user": get_username()
-        })
+
         tx_id = str(uuid.uuid4())  # Unique transaction ID
         doc_ref = db.collection("users").document(user_id).collection("transactions").document(tx_id)
         doc_ref.set({
@@ -90,7 +115,6 @@ if submit_button:
         })
     else:
         st.error("Please fill in all required fields.")
-        import pandas as pd
 
 def get_user_transactions(uid):
     tx_ref = db.collection("users").document(uid).collection("transactions").stream()
