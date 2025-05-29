@@ -9,6 +9,7 @@ import pandas as pd
 # Add the root directory to the path for imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from auth_guard import check_auth, get_username
+from pages.Settings import get_categories # <--- IMPORTANT CHANGE: Import get_categories from Settings
 
 # Check authentication
 check_auth()
@@ -39,47 +40,57 @@ st.markdown("""
 
 st.title("Add New Transaction 💰")
 
+# Fetch user-defined categories
+user_categories = get_categories(user_id)
+
+# Default categories to fall back on if the user hasn't defined any custom ones
+default_expense_categories = ["Food & Dining", "Transportation", "Shopping", "Entertainment", "Bills & Utilities", "Education", "Health", "Personal Care", "Others"]
+default_income_categories = ["Salary", "Freelance", "Investment Returns", "Gift", "Bonus", "Rental Income", "Refunds", "Other Income"]
+
+expense_categories = user_categories.get("expense", [])
+if not expense_categories: # If no custom expense categories, use defaults
+    expense_categories = default_expense_categories
+
+income_categories = user_categories.get("income", [])
+if not income_categories: # If no custom income categories, use defaults
+    income_categories = default_income_categories
+
 # Transaction form
 with st.form("transaction_form"):
     transaction_type = st.selectbox("Type", ["Expense", "Income"])
-    
-    category =  st.selectbox("Category", ["Food & Dining", "Transportation", "Shopping", "Entertainment", "Bills & Utilities"])
-    
+
+    # Dynamically change category options based on transaction type
+    if transaction_type == "Expense":
+        category_options = expense_categories
+    else:
+        category_options = income_categories
+
+    category =  st.selectbox("Category", category_options) # <--- IMPORTANT CHANGE: Use dynamic categories
+
     description = st.text_area("Description", height=90, placeholder="Enter transaction description")
- 
+
     col1, col2 = st.columns(2)
     with col1:
         amount = st.number_input("Amount ($)", min_value=1.00, format="%0.2f")
     with col2:
         date = st.date_input("Date", value=datetime.now())
-    
+
     submit_button = st.form_submit_button("Add Transaction")
 
 # Handle form submission
 if submit_button:
     if description and amount:
-        
-        # Display prediction
+
+        # Display prediction (using selected category for now)
         st.markdown(f"""
             <div class="prediction-card">
             <h4>🤖 AI Category Prediction</h4>
             Category: <b>{category}</b><br>
             </div>
         """, unsafe_allow_html=True)
-        
-        # Mock API call
+
         st.success("Transaction added successfully!")
-        
-        # Show what would be sent to backend
-        #st.write("Transaction Details:")
-        st.json({
-            "description": description,
-            "amount": amount,
-            "date": date.strftime("%m/%d/%Y"),
-            "type": transaction_type,
-            "category": category,
-            "user": get_username()
-        })
+
         tx_id = str(uuid.uuid4())  # Unique transaction ID
         doc_ref = db.collection("users").document(user_id).collection("transactions").document(tx_id)
         doc_ref.set({
@@ -91,16 +102,13 @@ if submit_button:
         })
     else:
         st.error("Please fill in all required fields.")
-        import pandas as pd
 
-def get_user_transactions(uid):
+def get_user_transactions_for_download(uid): # Renamed to avoid confusion with cached version
     tx_ref = db.collection("users").document(uid).collection("transactions").stream()
     return [tx.to_dict() for tx in tx_ref]
 
-tx_data = get_user_transactions(user_id)
+tx_data = get_user_transactions_for_download(user_id)
 df = pd.DataFrame(tx_data)
-
-st.download_button("Download CSV", df.to_csv(index=False), "expenses.csv", "text/csv")
 
 
 # Logout button
