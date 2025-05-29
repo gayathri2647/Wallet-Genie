@@ -1,4 +1,4 @@
-import streamlit as st
+import streamlit as st # type: ignore
 import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
@@ -8,34 +8,34 @@ import sys
 import os
 import firebase_admin
 from firebase_admin import credentials, firestore
+import plotly.express as px
 import numpy as np # Ensure numpy is imported for potential use if needed
 
 # Add the root directory to the path for imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from auth_guard import check_auth, get_username
-from config import CURRENCY, THEME, CUSTOM_CSS # Assuming config.py exists for currency/theme
+from config import CURRENCY, THEME, CUSTOM_CSS
 
 # Check authentication
 check_auth()
 if not firebase_admin._apps:
-    try:
-        cred = credentials.Certificate("firebase_key.json") # Ensure this path is correct
+    try: # Added try-except for robustness during firebase init
+        cred = credentials.Certificate("firebase_key.json")  # Replace with your JSON file path
         firebase_admin.initialize_app(cred)
     except Exception as e:
         st.error(f"Error initializing Firebase: {e}. Please ensure 'firebase_key.json' is correctly placed and valid.")
         st.stop() # Stop the app if Firebase can't be initialized
 
+
 db = firestore.client()
 
-# --- IMPORTANT: Replace with dynamic user ID ---
 user_id = "yugesh_demo_uid"
-# --- End of IMPORTANT ---
 
 # Page config
 st.set_page_config(
     page_title="Dashboard - WalletGenie",
     page_icon="🧞‍♂️",
-    layout="wide", # Use wide layout for more space for charts
+    layout="wide",
     initial_sidebar_state="expanded"
 )
 
@@ -52,6 +52,7 @@ st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
 # Header with greeting
 st.title(f"Welcome back, {get_username()}! 👋")
+
 
 ################################################################################
 # Get user transactions from Firestore
@@ -88,8 +89,8 @@ else:
     monthly_income = 0.0
     monthly_spend = 0.0
     total_balance = 0.0
-    df_expenses = pd.DataFrame(columns=['amount', 'date', 'type', 'category'])
-    df_income = pd.DataFrame(columns=['amount', 'date', 'type', 'category'])
+    df_expenses = pd.DataFrame(columns=['amount', 'date', 'type', 'category']) # Ensure df_expenses is always a DataFrame
+    df_income = pd.DataFrame(columns=['amount', 'date', 'type', 'category']) # Ensure df_income is also a DataFrame
     df = pd.DataFrame(columns=['amount', 'date', 'type', 'category']) # Ensure df is also empty but with columns
 
 # --- Key Metrics ---

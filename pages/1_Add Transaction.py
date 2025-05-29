@@ -9,16 +9,14 @@ import pandas as pd
 # Add the root directory to the path for imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from auth_guard import check_auth, get_username
+from pages.Settings import get_categories # <--- IMPORTANT CHANGE: Import get_categories from Settings
 
 # Check authentication
 check_auth()
 
 db = init_firestore()
 
-# --- IMPORTANT: Replace with dynamic user ID ---
 user_id = "yugesh_demo_uid"
-# --- End of IMPORTANT ---
-
 # Page config
 st.set_page_config(
     page_title="Add Transaction - WalletGenie",
@@ -41,23 +39,12 @@ st.markdown("""
 
 st.title("Add New Transaction 💰")
 
-# Function to fetch categories from Firestore.
-# This function is duplicated here for simplicity. In a larger app, consider
-# moving it to a shared utility file (e.g., `utils.py`) and importing it.
-@st.cache_data(ttl=60) # Cache the categories for 60 seconds
-def get_categories(uid):
-    doc_ref = db.collection("users").document(uid)
-    doc = doc_ref.get()
-    if doc.exists:
-        data = doc.to_dict()
-        return data.get("categories", {"expense": [], "income": []})
-    return {"expense": [], "income": []}
-
+# Fetch user-defined categories
 user_categories = get_categories(user_id)
+
 # Default categories to fall back on if the user hasn't defined any custom ones
 default_expense_categories = ["Food & Dining", "Transportation", "Shopping", "Entertainment", "Bills & Utilities", "Education", "Health", "Personal Care", "Others"]
 default_income_categories = ["Salary", "Freelance", "Investment Returns", "Gift", "Bonus", "Rental Income", "Refunds", "Other Income"]
-
 
 expense_categories = user_categories.get("expense", [])
 if not expense_categories: # If no custom expense categories, use defaults
@@ -66,7 +53,6 @@ if not expense_categories: # If no custom expense categories, use defaults
 income_categories = user_categories.get("income", [])
 if not income_categories: # If no custom income categories, use defaults
     income_categories = default_income_categories
-
 
 # Transaction form
 with st.form("transaction_form"):
@@ -78,7 +64,7 @@ with st.form("transaction_form"):
     else:
         category_options = income_categories
 
-    category =  st.selectbox("Category", category_options) # Use dynamic categories
+    category =  st.selectbox("Category", category_options) # <--- IMPORTANT CHANGE: Use dynamic categories
 
     description = st.text_area("Description", height=90, placeholder="Enter transaction description")
 
@@ -116,14 +102,12 @@ if submit_button:
     else:
         st.error("Please fill in all required fields.")
 
-def get_user_transactions(uid):
+def get_user_transactions_for_download(uid): # Renamed to avoid confusion with cached version
     tx_ref = db.collection("users").document(uid).collection("transactions").stream()
     return [tx.to_dict() for tx in tx_ref]
 
-tx_data = get_user_transactions(user_id)
+tx_data = get_user_transactions_for_download(user_id)
 df = pd.DataFrame(tx_data)
-
-st.download_button("Download CSV", df.to_csv(index=False), "expenses.csv", "text/csv")
 
 
 # Logout button
