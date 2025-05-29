@@ -15,7 +15,8 @@ check_auth()
 
 db = init_firestore()
 
-user_id = "yugesh_demo_uid"
+user_id = st.session_state.user_id
+
 # Page config
 st.set_page_config(
     page_title="Add Transaction - WalletGenie",

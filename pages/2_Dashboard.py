@@ -23,7 +23,7 @@ if not firebase_admin._apps:
 
 db = firestore.client()
 
-user_id = "yugesh_demo_uid"
+user_id = st.session_state.user_id
 
 # Page config
 st.set_page_config(

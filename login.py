@@ -7,87 +7,130 @@ import json
 from datetime import datetime
 import os
 import sys
+import requests
 
-# Add the current directory to the path so that the pages can import from the root
+# Add current directory to sys.path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-# Initialize Firebase Admin SDK (for backend operations)
+# Firebase Admin SDK initialization
 try:
-    cred = credentials.Certificate("firebase_key.json")   #firebase_key = wallet-3f13a-d7fbf39fbb1b
+    cred = credentials.Certificate("firebase_key.json")
     firebase_admin.initialize_app(cred)
 except ValueError:
-    # App already initialized
     pass
 
-# Configure Pyrebase (for authentication operations)
+# Pyrebase config
 with open("firebase_config.json") as f:
     config = json.load(f)
 
 firebase = pyrebase.initialize_app(config)
 auth_pb = firebase.auth()
 
-# Page configuration
+# Streamlit page config
 st.set_page_config(page_title="Wallet Genie - Login", page_icon="🔐", layout="centered")
 
-# Session state initialization
-if 'logged_in' not in st.session_state:
-    st.session_state.logged_in = False
-if 'user_info' not in st.session_state:
-    st.session_state.user_info = None
-if 'authentication_status' not in st.session_state:
-    st.session_state.authentication_status = None
+# Session state defaults
+for key in ["logged_in", "user_info", "authentication_status", "user_id", "email"]:
+    if key not in st.session_state:
+        st.session_state[key] = None
 
+# 🔒 Email/Password Login
+def login_user(email, password):
+    try:
+        user = auth_pb.sign_in_with_email_and_password(email, password)
+        account_info = auth_pb.get_account_info(user['idToken'])
+        user_id = account_info['users'][0]['localId']
+        st.session_state.update({
+            "user_info": user,
+            "logged_in": True,
+            "authentication_status": True,
+            "email": email,
+            "user_id": user_id
+        })
+        st.success("Login successful!")
+        st.balloons()
+        st.switch_page("pages/2_Dashboard.py")
+    except Exception as e:
+        st.session_state.authentication_status = False
+        st.error("Login failed. Please check your credentials.")
+
+# 🧾 Sign Up
+def signup_user(email, password):
+    try:
+        user = auth_pb.create_user_with_email_and_password(email, password)
+        auth_pb.send_email_verification(user['idToken'])
+        st.success("Account created! Please verify your email.")
+        st.session_state.update({
+            "user_info": user,
+            "logged_in": True,
+            "authentication_status": True,
+            "email": email
+        })
+        st.switch_page("pages/Dashboard.py")
+    except Exception as e:
+        st.session_state.authentication_status = False
+        st.error(f"Signup failed: {e}")
+
+# 🟢 Google Login via OAuth
+def google_login():
+    firebase_web_api_key = config["apiKey"]
+    st.markdown("Login via Google requires a pop-up OAuth sign-in page.")
+    oauth_url = f"https://accounts.google.com/o/oauth2/v2/auth?client_id={config['authDomain'].split('.')[0]}&redirect_uri=http://localhost&response_type=token&scope=email"
+    st.markdown(f"[Click here to sign in with Google]({oauth_url})")
+    # NOTE: To implement full OAuth with token exchange, you must host and handle redirect URI (not fully supported in Streamlit alone).
+
+# 👤 UI for logged-in user
+def display_logged_in_ui():
+    st.title("Welcome to Wallet Genie! 🧞‍♂️")
+    st.write(f"Logged in as: {st.session_state.email}")
+    st.write(f"Last login: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    if st.button("Logout", use_container_width=True):
+        for key in ["logged_in", "user_info", "authentication_status", "user_id", "email"]:
+            st.session_state[key] = None
+        st.rerun()
+
+# 🧩 Login/Signup Tabs
 def login_signup_ui():
-    """Main UI function for login and signup"""
-    
-    # If already logged in, redirect to dashboard
     if st.session_state.logged_in:
         display_logged_in_ui()
         return
-    
-    # App title and description
+
     st.title("Wallet Genie 🧞‍♂️")
     st.markdown("Your personal finance assistant")
-    
-    # Create tabs for login and signup
+
     tab1, tab2 = st.tabs(["Login", "Sign Up"])
-    
-    # Login Tab
+
     with tab1:
         email = st.text_input("Email", key="login_email")
         password = st.text_input("Password", type="password", key="login_password")
-        
-        col1, col2 = st.columns([1, 1])
+
+        col1, col2, col3 = st.columns([1, 1, 2])
         with col1:
-            login_btn = st.button("Login", use_container_width=True)
+            if st.button("Login", use_container_width=True):
+                if email and password:
+                    login_user(email, password)
+                else:
+                    st.error("Please enter email and password")
         with col2:
-            forgot_btn = st.button("Forgot Password?", use_container_width=True)
-            
-        if login_btn:
-            if email and password:
-                login_user(email, password)
-            else:
-                st.error("Please enter both email and password")
-                
-        if forgot_btn:
-            if email:
-                try:
-                    auth_pb.send_password_reset_email(email)
-                    st.success(f"Password reset link sent to {email}")
-                except Exception as e:
-                    st.error(f"Error sending reset email: {e}")
-            else:
-                st.warning("Please enter your email address")
-    
-    # Signup Tab
+            if st.button("Forgot Password?", use_container_width=True):
+                if email:
+                    try:
+                        auth_pb.send_password_reset_email(email)
+                        st.success(f"Reset link sent to {email}")
+                    except Exception as e:
+                        st.error(f"Error sending reset email: {e}")
+                else:
+                    st.warning("Please enter your email")
+        with col3:
+            if st.button("Login with Google", use_container_width=True):
+                google_login()
+
     with tab2:
         new_email = st.text_input("Email", key="signup_email")
         new_password = st.text_input("Password", type="password", key="signup_password")
         confirm_password = st.text_input("Confirm Password", type="password")
-        
-        signup_btn = st.button("Create Account", use_container_width=True)
-        
-        if signup_btn:
+
+        if st.button("Create Account", use_container_width=True):
             if new_email and new_password and confirm_password:
                 if new_password == confirm_password:
                     signup_user(new_email, new_password)
@@ -96,80 +139,6 @@ def login_signup_ui():
             else:
                 st.error("Please fill in all fields")
 
-def login_user(email, password):
-    """Handle user login"""
-    try:
-        user = auth_pb.sign_in_with_email_and_password(email, password)
-        st.session_state.user_info = user
-        st.session_state.logged_in = True
-        st.session_state.authentication_status = True
-        st.session_state.email = email
-        
-        st.success("Login successful!")
-        st.balloons()
-        
-        # Redirect to the dashboard page
-        st.switch_page("pages/2_Dashboard.py")
-    except Exception as e:
-        st.error(f"Login failed: {e}")
-        st.session_state.authentication_status = False
-
-def signup_user(email, password):
-    """Handle user signup"""
-    try:
-        # Create user with Firebase Authentication
-        user = auth_pb.create_user_with_email_and_password(email, password)
-        
-        # Send email verification
-        auth_pb.send_email_verification(user['idToken'])
-        
-        st.success("Account created successfully! Please verify your email.")
-        
-        # Automatically log in the new user
-        st.session_state.user_info = user
-        st.session_state.logged_in = True
-        st.session_state.authentication_status = True
-        st.session_state.email = email
-        
-        # Redirect to the dashboard page
-        st.switch_page("pages/Dashboard.py")
-    except Exception as e:
-        st.error(f"Signup failed: {e}")
-        st.session_state.authentication_status = False
-
-def display_logged_in_ui():
-    """Display UI for logged in users"""
-    st.title(f"Welcome to Wallet Genie! 🧞‍♂️")
-    
-    # Display user info
-    st.write(f"Logged in as: {st.session_state.user_info['email']}")
-    st.write(f"Last login: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    
-    # # Navigation buttons
-    # col1, col2, col3, col4 = st.columns(4)
-    
-    # with col1:
-    #     if st.button("Dashboard", use_container_width=True):
-    #         st.switch_page("pages/Dashboard.py")
-    
-    # with col2:
-    #     if st.button("New Transaction", use_container_width=True):
-    #         st.switch_page("pages/New Transactions.py")
-    
-    # with col3:
-    #     if st.button("History", use_container_width=True):
-    #         st.switch_page("pages/Transactions History.py")
-    
-    # with col4:
-    #     if st.button("Statistics", use_container_width=True):
-    #         st.switch_page("pages/Statistics.py")
-    
-    # Logout button
-    if st.button("Logout", use_container_width=True):
-        st.session_state.logged_in = False
-        st.session_state.user_info = None
-        st.session_state.authentication_status = None
-        st.rerun()
-
+# Run the UI
 if __name__ == "__main__":
     login_signup_ui()
