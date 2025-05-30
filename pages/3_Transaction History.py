@@ -19,7 +19,7 @@ check_auth()
 db = init_firestore()
 
 # --- IMPORTANT: Replace with dynamic user ID ---
-user_id = "yugesh_demo_uid"
+user_id = st.session_state.user_id
 # --- End of IMPORTANT ---
 
 # Page config
