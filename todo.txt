@@ -9,3 +9,15 @@ it'll display the existing Transaction types and a grayed out "Add Transaction t
 atmost 10 types can be added for expense and another 10 for income
 
 the dashboard have lots of empty spaces, so fill it with the diagrams from the page "Reports & Charts"
+
+
+
+29/may
+ todo for yuvi
+
+*sync 'Add new transaction" page's dropdown to settings
+*ensure dashboard activites behave correctly
+*transaction history shows demo id transactions check that
+*budget planner needed to be sync with transaction Categories
+*to get an idea wth even is goal tracker
+*settings ui need much more optimization 
