@@ -10,6 +10,7 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 import plotly.express as px
 import numpy as np # Ensure numpy is imported for potential use if needed
+#from shared_utils import get_categories
 
 # Add the root directory to the path for imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

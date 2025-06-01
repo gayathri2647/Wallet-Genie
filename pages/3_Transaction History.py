@@ -33,7 +33,6 @@ st.title("Transaction History 📜")
 st.write("View and manage all your past transactions.")
 
 # Function to get user transactions from Firestore
-@st.cache_data(ttl=60) # Cache the data for 60 seconds
 def get_user_transactions(uid):
     transactions = []
     # Fetch transactions from the 'transactions' subcollection for the specific user
@@ -99,8 +98,7 @@ if tx_data:
         if search_query:
             df = df[df['description'].str.contains(search_query, case=False, na=False)]
 
-
-    # Display the filtered data using st.dataframe or st.table
+    # Display the filtered data
     st.subheader("Filtered Transactions")
 
     # Format amount for display
@@ -109,19 +107,49 @@ if tx_data:
     )
     df['date_display'] = df['date'].dt.strftime('%Y-%m-%d')
 
+    # Function to delete a transaction
+    def delete_transaction(tx_id):
+        if st.session_state.get(f"confirm_delete_{tx_id}", False):
+            # Delete the transaction
+            db.collection("users").document(user_id).collection("transactions").document(tx_id).delete()
+            st.session_state[f"delete_success"] = True
+            st.session_state[f"confirm_delete_{tx_id}"] = False
+            st.rerun()
+        else:
+            st.session_state[f"confirm_delete_{tx_id}"] = True
 
-    # Select columns to display
-    display_cols = ['date_display', 'description', 'category', 'type', 'amount_display']
-    display_df = df[display_cols].rename(columns={
-        'date_display': 'Date',
-        'description': 'Description',
-        'category': 'Category',
-        'type': 'Type',
-        'amount_display': 'Amount'
-    })
+    # Show success message if a transaction was deleted
+    if st.session_state.get("delete_success", False):
+        st.success("Transaction deleted successfully!")
+        st.session_state["delete_success"] = False
 
-    if not display_df.empty:
-        st.dataframe(display_df, use_container_width=True, hide_index=True)
+    if not df.empty:
+        # Display each transaction with a delete button
+        for i, row in df.iterrows():
+            col1, col2, col3, col4, col5, col6 = st.columns([2, 4, 2, 2, 2, 1])
+            
+            with col1:
+                st.write(row['date_display'])
+            with col2:
+                st.write(row['description'])
+            with col3:
+                st.write(row['category'])
+            with col4:
+                st.write(row['type'])
+            with col5:
+                st.write(row['amount_display'])
+            with col6:
+                tx_id = row['id']
+                if st.session_state.get(f"confirm_delete_{tx_id}", False):
+                    if st.button("✓", key=f"confirm_{tx_id}", type="primary"):
+                        delete_transaction(tx_id)
+                    if st.button("✗", key=f"cancel_{tx_id}"):
+                        st.session_state[f"confirm_delete_{tx_id}"] = False
+                        st.rerun()
+                else:
+                    st.button("🗑️", key=f"delete_{tx_id}", on_click=lambda tx_id=tx_id: delete_transaction(tx_id))
+            
+            st.markdown("---")
     else:
         st.warning("No transactions match the selected filters.")
 

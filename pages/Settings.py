@@ -191,5 +191,31 @@ with col_inc_cat:
     else:
         st.write("No custom income categories defined yet.")
 
+# Danger Zone
+st.markdown("---")
+st.header("Danger Zone ⚠️")
+
+with st.expander("Delete All Transactions"):
+    st.warning("This action cannot be undone. All your transaction data will be permanently deleted.")
+    
+    # GitHub-style confirmation
+    confirmation_text = f"delete-all-transactions-{user_id[:5]}"
+    user_confirmation = st.text_input(
+        f"To confirm, type '{confirmation_text}' below:",
+        key="delete_confirmation"
+    )
+    
+    if st.button("Delete All Transactions", type="primary", use_container_width=True):
+        if user_confirmation == confirmation_text:
+            # Use the shared utility function to delete all transactions
+            from shared_utils import delete_all_transactions
+            success = delete_all_transactions(db, user_id)
+            
+            if success:
+                st.success("All transactions have been deleted successfully!")
+                st.balloons()
+        else:
+            st.error("Confirmation text doesn't match. Transactions were not deleted.")
+
 # Logout button
 st.sidebar.button("Logout", on_click=lambda: st.session_state.update({"logged_in": False}))
