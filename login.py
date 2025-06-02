@@ -71,13 +71,6 @@ def signup_user(email, password):
         st.session_state.authentication_status = False
         st.error(f"Signup failed: {e}")
 
-# 🟢 Google Login via OAuth
-def google_login():
-    firebase_web_api_key = config["apiKey"]
-    st.markdown("Login via Google requires a pop-up OAuth sign-in page.")
-    oauth_url = f"https://accounts.google.com/o/oauth2/v2/auth?client_id={config['authDomain'].split('.')[0]}&redirect_uri=http://localhost&response_type=token&scope=email"
-    st.markdown(f"[Click here to sign in with Google]({oauth_url})")
-    # NOTE: To implement full OAuth with token exchange, you must host and handle redirect URI (not fully supported in Streamlit alone).
 
 # 👤 UI for logged-in user
 def display_logged_in_ui():
@@ -104,7 +97,7 @@ def login_signup_ui():
         email = st.text_input("Email", key="login_email")
         password = st.text_input("Password", type="password", key="login_password")
 
-        col1, col2, col3 = st.columns([1, 1, 2])
+        col1, col2 = st.columns([1, 1])
         with col1:
             if st.button("Login", use_container_width=True):
                 if email and password:
@@ -121,9 +114,7 @@ def login_signup_ui():
                         st.error(f"Error sending reset email: {e}")
                 else:
                     st.warning("Please enter your email")
-        with col3:
-            if st.button("Login with Google", use_container_width=True):
-                google_login()
+        
 
     with tab2:
         new_email = st.text_input("Email", key="signup_email")
