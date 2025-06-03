@@ -15,9 +15,10 @@ the dashboard have lots of empty spaces, so fill it with the diagrams from the p
 29/may
  todo for yuvi
 
-*sync 'Add new transaction" page's dropdown to settings
-*ensure dashboard activites behave correctly
-*transaction history shows demo id transactions check that
-*budget planner needed to be sync with transaction Categories
-*to get an idea wth even is goal tracker
-*settings ui need much more optimization 
+*sync 'Add new transaction" page's dropdown to settings   done✅
+*ensure dashboard activites behave correctly    done✅
+*transaction history shows demo id transactions check that    done✅
+*budget planner needed to be sync with transaction Categories  done✅
+*to get an idea wth even is goal tracker  done✅
+*settings ui need much more optimization  done✅
+

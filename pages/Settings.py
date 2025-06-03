@@ -138,23 +138,10 @@ st.subheader("Manage Existing Categories")
 
 # Display deletion notification if a category was deleted
 if "deleted_category" in st.session_state:
-    st.warning(f"Category '{st.session_state.deleted_category}' has been deleted successfully!", icon="✅")
-    # Set up auto-dismiss of notification
-    import time
-    import threading
-    
-    if "notification_timer" not in st.session_state:
-        def clear_notification():
-            time.sleep(2)  # Wait for 2 seconds
-            if "deleted_category" in st.session_state:
-                del st.session_state.deleted_category
-                st.rerun()
-                
-        # Start a background thread to clear the notification
-        thread = threading.Thread(target=clear_notification)
-        thread.daemon = True
-        thread.start()
-        st.session_state.notification_timer = True
+    st.success(f"Category '{st.session_state.deleted_category}' has been deleted successfully!")
+    # Clear the notification after displaying it once
+    del st.session_state.deleted_category
+
 col_exp_cat, col_inc_cat = st.columns(2)
 
 with col_exp_cat:

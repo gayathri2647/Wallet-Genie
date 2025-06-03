@@ -122,6 +122,7 @@ st.markdown("#### Daily Spending Trend")
 if not df.empty:
     # Group by date (only date part) and sum the amounts
     daily_totals = df.groupby(df["date"].dt.date)["amount"].sum().reset_index()
+    print(daily_totals)
     daily_totals.rename(columns={"date": "Date", "amount": "Amount"}, inplace=True)
     fig_trend = px.line(
         daily_totals,
