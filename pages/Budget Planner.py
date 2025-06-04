@@ -110,24 +110,31 @@ else:
 st.subheader("Budget Categories")
 
 # --- Fetch current month's transactions for 'spent' calculation ---
-@st.cache_data(ttl=60) # Keep cache to avoid excessive Firestore reads on normal interactions
+@st.cache_data(ttl=60) # Cache for 60 seconds
 def get_current_month_expenses(uid):
+    """Get current month's expenses from Firestore"""
     transactions_ref = db.collection("users").document(uid).collection("transactions")
     current_month = datetime.now().month
     current_year = datetime.now().year
 
+    # Get all transactions
     all_tx_docs = [doc.to_dict() for doc in transactions_ref.stream()]
     df_all_tx = pd.DataFrame(all_tx_docs)
 
     if not df_all_tx.empty and 'date' in df_all_tx.columns:
-        df_all_tx['date'] = pd.to_datetime(df_all_tx['date'], errors='coerce')
+        # Handle both date formats (MM/DD/YYYY and YYYY-MM-DD)
+        df_all_tx['date'] = pd.to_datetime(df_all_tx['date'], format='mixed', errors='coerce')
         df_all_tx = df_all_tx.dropna(subset=['date', 'amount', 'type', 'category'])
+        
+        # Filter for current month expenses
         df_current_month = df_all_tx[
             (df_all_tx['date'].dt.month == current_month) &
             (df_all_tx['date'].dt.year == current_year) &
             (df_all_tx['type'].str.lower() == 'expense')
         ].copy()
-        df_current_month['amount'] = pd.to_numeric(df_current_month['amount'], errors='coerce')
+        
+        # Convert amount to absolute value for expense calculations
+        df_current_month['amount'] = pd.to_numeric(df_current_month['amount'], errors='coerce').abs()
         return df_current_month
     return pd.DataFrame()
 
@@ -206,7 +213,7 @@ if st.button("Save Budget", type="primary"):
     budget_data = {
         "monthly_income": monthly_income,
         "categories": budget_categories,
-        "last_updated": datetime.now().strftime("%m/%d/%Y %H:%M:%S")
+        "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
     update_budget(db, user_id, budget_data)
     st.success("Budget saved successfully!")
