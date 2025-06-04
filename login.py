@@ -173,3 +173,6 @@ else:
                     st.error("Passwords do not match")
             else:
                 st.error("Please fill in all fields.")
+
+# Logout button
+st.sidebar.button("Logout", on_click=lambda: st.session_state.update({"logged_in": False}))

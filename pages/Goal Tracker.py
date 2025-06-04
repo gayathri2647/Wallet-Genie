@@ -4,26 +4,42 @@ import pandas as pd
 from datetime import datetime, timedelta
 import sys
 import os
+import firebase_admin
+from firebase_admin import firestore
+import uuid
 
 # Add the root directory to the path for imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from auth_guard import check_auth, get_username
+from shared_utils import get_goals, add_goal, update_goal, delete_goal
 
 # Check authentication
 check_auth()
+
+# Initialize Firebase
+if not firebase_admin._apps:
+    try:
+        cred = firebase_admin.credentials.Certificate("firebase_key.json")
+        firebase_admin.initialize_app(cred)
+    except Exception as e:
+        st.error(f"Error initializing Firebase: {e}. Please ensure 'firebase_key.json' is correctly placed and valid.")
+        st.stop()
+
+db = firestore.client()
+user_id = st.session_state.user_id
 
 # Page config
 st.set_page_config(
     page_title="Goal Tracker - WalletGenie",
     page_icon="🎯",
-    layout="wide"
+    layout="centered"
 )
 
 # Custom CSS
 st.markdown("""
     <style>
     .goal-card {
-        background-color: #f0f2f6;
+        background-color: #262730;
         padding: 20px;
         border-radius: 10px;
         margin: 10px 0;
@@ -49,12 +65,11 @@ st.write("Track and achieve your financial goals")
 # Add new goal form
 st.subheader("Add New Goal")
 with st.form("new_goal", clear_on_submit=True):
-    st.markdown('<div class="goal-form">', unsafe_allow_html=True)
-    
     col1, col2 = st.columns(2)
     with col1:
         goal_name = st.text_input("Goal Name")
-        goal_amount = st.number_input("Target Amount ($)", min_value=0.0, step=100.0)
+        goal_amount = st.number_input("Target Amount (₹)", min_value=0.0, step=100.0)
+        current_amount = st.number_input("Current Amount (₹)", min_value=0.0, step=100.0)
     
     with col2:
         goal_deadline = st.date_input("Target Date", min_value=datetime.now().date())
@@ -64,118 +79,157 @@ with st.form("new_goal", clear_on_submit=True):
         )
     
     submit_goal = st.form_submit_button("Add Goal")
-    st.markdown('</div>', unsafe_allow_html=True)
 
 if submit_goal and goal_name and goal_amount > 0:
-    st.success(f"Goal '{goal_name}' added successfully!")
-
-# Mock existing goals
-goals = [
-    {
-        "name": "Emergency Fund",
-        "target": 10000,
-        "current": 7500,
-        "deadline": datetime.now().date() + timedelta(days=90),
-        "category": "Savings",
-        "on_track": True
-    },
-    {
-        "name": "New Car Down Payment",
-        "target": 5000,
-        "current": 2000,
-        "deadline": datetime.now().date() + timedelta(days=60),
-        "category": "Purchase",
-        "on_track": False
-    },
-    {
-        "name": "Vacation Fund",
-        "target": 3000,
-        "current": 2800,
-        "deadline": datetime.now().date() + timedelta(days=30),
-        "category": "Savings",
-        "on_track": True
+    # Calculate if goal is on track
+    days_left = (goal_deadline - datetime.now().date()).days
+    if days_left <= 0:
+        on_track = current_amount >= goal_amount
+    else:
+        daily_required = (goal_amount - current_amount) / days_left
+        # If daily required is negative or zero, we're already at or above target
+        on_track = daily_required <= 0 or current_amount >= goal_amount
+    
+    # Create goal data
+    goal_data = {
+        "name": goal_name,
+        "target": goal_amount,
+        "current": current_amount,
+        "deadline": goal_deadline.isoformat(),
+        "category": goal_category,
+        "on_track": on_track,
+        "created_at": datetime.now().isoformat()
     }
-]
+    
+    # Add goal to Firestore
+    add_goal(db, user_id, goal_data)
+    st.success(f"Goal '{goal_name}' added successfully!")
+    st.rerun()
+
+# Get user goals from Firestore
+user_goals = get_goals(db, user_id)
 
 # Display goals
 st.subheader("Your Goals")
 
-for goal in goals:
-    progress = goal["current"] / goal["target"]
-    status_class = "on-track" if goal["on_track"] else "off-track"
-    days_left = (goal["deadline"] - datetime.now().date()).days
-    
-    st.markdown(f"""
-        <div class="goal-card {status_class}">
-            <h3>{goal["name"]}</h3>
-            <p>Category: {goal["category"]}</p>
-        </div>
-    """, unsafe_allow_html=True)
-    
-    col1, col2, col3 = st.columns([2, 1, 1])
-    
-    with col1:
-        st.progress(progress)
-        st.write(f"${goal['current']:,.2f} of ${goal['target']:,.2f}")
-    
-    with col2:
-        st.metric(
-            "Days Left",
-            days_left,
-            f"{days_left} days"
-        )
-    
-    with col3:
-        if not goal["on_track"]:
-            st.warning("⚠️ Off Track")
-            required_daily = (goal["target"] - goal["current"]) / days_left
-            st.write(f"Need ${required_daily:.2f}/day")
-        else:
-            st.success("✅ On Track")
+if not user_goals:
+    st.info("You don't have any goals yet. Add your first goal above!")
+else:
+    for goal in user_goals:
+        # Convert deadline string back to date
+        goal["deadline"] = datetime.fromisoformat(goal["deadline"]).date()
+        
+        # Calculate progress
+        progress = goal["current"] / goal["target"] if goal["target"] > 0 else 0
+        status_class = "on-track" if goal["on_track"] else "off-track"
+        days_left = (goal["deadline"] - datetime.now().date()).days
+        
+        st.markdown(f"""
+            <div class="goal-card {status_class}">
+                <h3>{goal["name"]}</h3>
+                <p>Category: {goal["category"]}</p>
+            </div>
+        """, unsafe_allow_html=True)
+        
+        col1, col2, col3, col4 = st.columns([2, 1, 1, 1])
+        
+        with col1:
+            st.progress(min(progress, 1.0))
+            st.write(f"₹{goal['current']:,.2f} of ₹{goal['target']:,.2f}")
+        
+        with col2:
+            st.metric(
+                "Days Left",
+                max(0, days_left),
+                f"{max(0, days_left)} days"
+            )
+        
+        with col3:
+            if not goal["on_track"] and days_left > 0:
+                st.warning("⚠️ Off Track")
+                required_daily = (goal["target"] - goal["current"]) / days_left if days_left > 0 else 0
+                st.write(f"Need ₹{required_daily:.2f}/day")
+            else:
+                st.success("✅ On Track" if days_left > 0 else "✅ Complete" if goal["current"] >= goal["target"] else "❌ Incomplete")
+        
+        with col4:
+            # Update goal form
+            with st.expander("Update"):
+                with st.form(key=f"update_goal_{goal['id']}"):
+                    new_current = st.number_input("Current Amount (₹)", 
+                                                min_value=0.0, 
+                                                value=float(goal["current"]), 
+                                                step=50.0)
+                    
+                    update_submitted = st.form_submit_button("Update Progress")
+                    delete_submitted = st.form_submit_button("Delete Goal", type="primary")
+                    
+                    if update_submitted:
+                        # Recalculate if on track
+                        days_left = (goal["deadline"] - datetime.now().date()).days
+                        if days_left <= 0:
+                            on_track = new_current >= goal["target"]
+                        else:
+                            daily_required = (goal["target"] - new_current) / days_left
+                            on_track = daily_required <= 0 or new_current >= goal["target"]
+                        
+                        # Update goal in Firestore
+                        update_goal(db, user_id, goal["id"], {
+                            "current": new_current,
+                            "on_track": on_track
+                        })
+                        st.success("Goal updated!")
+                        st.rerun()
+                    
+                    if delete_submitted:
+                        delete_goal(db, user_id, goal["id"])
+                        st.success("Goal deleted!")
+                        st.rerun()
 
-# Goal analytics
-st.subheader("Goal Analytics")
-
-# Progress over time chart
-dates = pd.date_range(start='2023-01-01', end=datetime.now(), freq='W')
-progress_data = []
-
-for goal in goals:
-    for date in dates:
-        # Simulate historical progress
-        progress_data.append({
-            "Date": date,
-            "Goal": goal["name"],
-            "Amount": min(goal["current"] * (1 - (datetime.now() - date.to_pydatetime()).days / 180), goal["target"])
-        })
-
-df_progress = pd.DataFrame(progress_data)
-
-fig = px.line(
-    df_progress,
-    x="Date",
-    y="Amount",
-    color="Goal",
-    title="Goal Progress Over Time"
-)
-st.plotly_chart(fig, use_container_width=True)
-
-# Goal summary
-col1, col2, col3 = st.columns(3)
-
-with col1:
-    total_goals = len(goals)
-    on_track_goals = sum(1 for g in goals if g["on_track"])
-    st.metric("Total Goals", total_goals, f"{on_track_goals} on track")
-
-with col2:
-    total_target = sum(g["target"] for g in goals)
-    total_current = sum(g["current"] for g in goals)
-    st.metric("Total Progress", f"${total_current:,.2f}", f"{(total_current/total_target)*100:.1f}%")
-
-with col3:
-    avg_progress = sum(g["current"]/g["target"] for g in goals) / len(goals)
-    st.metric("Average Progress", f"{avg_progress*100:.1f}%")
+    # Goal analytics
+    if len(user_goals) > 0:
+        st.subheader("Goal Analytics")
+        
+        # Progress over time chart (using current data since we don't have historical data yet)
+        progress_data = []
+        
+        for goal in user_goals:
+            # Create a simple progress point for each goal
+            progress_data.append({
+                "Date": datetime.now(),
+                "Goal": goal["name"],
+                "Amount": goal["current"],
+                "Target": goal["target"]
+            })
+        
+        df_progress = pd.DataFrame(progress_data)
+        
+        if not df_progress.empty:
+            fig = px.bar(
+                df_progress,
+                x="Goal",
+                y=["Amount", "Target"],
+                title="Current Goal Progress",
+                barmode="group"
+            )
+            st.plotly_chart(fig, use_container_width=True)
+        
+        # Goal summary
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            total_goals = len(user_goals)
+            on_track_goals = sum(1 for g in user_goals if g["on_track"])
+            st.metric("Total Goals", total_goals, f"{on_track_goals} on track")
+        
+        with col2:
+            total_target = sum(g["target"] for g in user_goals)
+            total_current = sum(g["current"] for g in user_goals)
+            st.metric("Total Progress", f"₹{total_current:,.2f}", f"{(total_current/total_target)*100:.1f}%" if total_target > 0 else "0%")
+        
+        with col3:
+            avg_progress = sum(g["current"]/g["target"] for g in user_goals if g["target"] > 0) / len(user_goals) if user_goals else 0
+            st.metric("Average Progress", f"{avg_progress*100:.1f}%")
 
 # Logout button
 st.sidebar.button("Logout", on_click=lambda: st.session_state.update({"logged_in": False}))

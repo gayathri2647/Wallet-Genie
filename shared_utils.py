@@ -57,3 +57,31 @@ def update_budget(db, uid, budget_data):
     doc_ref = db.collection("users").document(uid).collection("budget").document("current")
     doc_ref.set(budget_data, merge=True)
     return True
+
+def get_goals(db, uid):
+    """Get user financial goals from Firestore"""
+    goals_ref = db.collection("users").document(uid).collection("goals").stream()
+    goals = []
+    for doc in goals_ref:
+        goal_data = doc.to_dict()
+        goal_data["id"] = doc.id
+        goals.append(goal_data)
+    return goals
+
+def add_goal(db, uid, goal_data):
+    """Add a new financial goal to Firestore"""
+    goals_ref = db.collection("users").document(uid).collection("goals")
+    goals_ref.add(goal_data)
+    return True
+
+def update_goal(db, uid, goal_id, goal_data):
+    """Update an existing financial goal in Firestore"""
+    goal_ref = db.collection("users").document(uid).collection("goals").document(goal_id)
+    goal_ref.update(goal_data)
+    return True
+
+def delete_goal(db, uid, goal_id):
+    """Delete a financial goal from Firestore"""
+    goal_ref = db.collection("users").document(uid).collection("goals").document(goal_id)
+    goal_ref.delete()
+    return True
