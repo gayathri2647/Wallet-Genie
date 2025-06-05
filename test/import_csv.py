@@ -9,7 +9,7 @@ import sys
 # to run python import_csv.py 3GAvtAHRXzOGf2LRhDmWhrPhJxI3
 # Initialize Firebase
 if not firebase_admin._apps:
-    cred = credentials.Certificate("firebase_key.json")
+    cred = credentials.Certificate("../firebase_key.json")
     firebase_admin.initialize_app(cred)
 
 db = firestore.client()
@@ -66,6 +66,6 @@ if __name__ == "__main__":
         sys.exit(1)
     
     user_id = sys.argv[1]
-    csv_path = "db/financial_transactions.csv"
+    csv_path = "../db/full_dataset.csv"
     
     import_transactions(csv_path, user_id)
