@@ -119,8 +119,6 @@ st.markdown("""
 
 # Sidebar configuration
 with st.sidebar:
-    st.title("Goal Settings")
-    st.markdown("---")
     st.button("Logout", type="primary", on_click=lambda: st.session_state.update({"logged_in": False}))
 
 # Main content
