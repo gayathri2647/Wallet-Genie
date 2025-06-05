@@ -53,8 +53,16 @@ with st.container():
     transaction_type = st.selectbox("Type", ["Expense", "Income"], key="transaction_type")
     # Dynamically set category options
     category_options = expense_categories if transaction_type == "Expense" else income_categories
+    # Add "Others" option if not already present
+    if "Others" not in category_options:
+        category_options = list(category_options) + ["Others"]
         
     category = st.selectbox("Category", category_options, key="category")
+
+    # Show text input for custom category when "Others" is selected
+    custom_category = None
+    if category == "Others":
+        custom_category = st.text_input("Enter custom category", key="custom_category")
 
     description = st.text_area("Description", height=90, placeholder="Enter transaction description")
 
@@ -69,17 +77,23 @@ with st.container():
 # Handle form submission
 if submit_button:
     if description and amount:
-
-        tx_id = str(uuid.uuid4())  # Unique transaction ID
-        doc_ref = db.collection("users").document(user_id).collection("transactions").document(tx_id)
-        doc_ref.set({
-            "description": description,
-            "amount": amount,
-            "date": date.strftime("%m/%d/%Y"),
-            "type": transaction_type,
-            "category": category
-        })
-        st.success("Transaction added successfully!")
+        # Use custom category if "Others" was selected and a custom category was entered
+        final_category = custom_category if category == "Others" and custom_category else category
+        
+        # Don't submit if "Others" was selected but no custom category was entered
+        if category == "Others" and not custom_category:
+            st.error("Please enter a custom category name.")
+        else:
+            tx_id = str(uuid.uuid4())  # Unique transaction ID
+            doc_ref = db.collection("users").document(user_id).collection("transactions").document(tx_id)
+            doc_ref.set({
+                "description": description,
+                "amount": amount,
+                "date": date.strftime("%m/%d/%Y"),
+                "type": transaction_type,
+                "category": final_category
+            })
+            st.success("Transaction added successfully!")
     else:
         st.error("Please fill in all required fields.")
 
