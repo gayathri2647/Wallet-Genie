@@ -1,14 +1,14 @@
-import streamlit as st # type: ignore
-import plotly.express as px
+import streamlit as st
+import plotly.express as px 
 import plotly.graph_objects as go
 import pandas as pd
 import random
 from datetime import datetime, timedelta
 import sys
 import os
-import firebase_admin
+import firebase_admin 
 from firebase_admin import credentials, firestore
-import plotly.express as px
+import plotly.express as px 
 import numpy as np # Ensure numpy is imported for potential use if needed
 #from shared_utils import get_categories
 
@@ -122,7 +122,7 @@ st.markdown("#### Daily Spending Trend")
 if not df.empty:
     # Group by date (only date part) and sum the amounts
     daily_totals = df.groupby(df["date"].dt.date)["amount"].sum().reset_index()
-    print(daily_totals)
+
     daily_totals.rename(columns={"date": "Date", "amount": "Amount"}, inplace=True)
     fig_trend = px.line(
         daily_totals,

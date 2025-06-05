@@ -24,7 +24,7 @@ user_id = st.session_state.user_id
 st.set_page_config(
     page_title="Budget Planner - WalletGenie",
     page_icon="📊",
-    layout="wide",
+    layout="centered",
     initial_sidebar_state="expanded"
 )
 
@@ -42,10 +42,10 @@ st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 st.title("Budget Planner 📊")
 
 # Add a "Refresh Data" button
-if st.button("Refresh Budget Data 🔄", key="refresh_budget_data_button"):
-    # Clear the cache for the get_current_month_expenses function
-    st.cache_data.clear()
-    st.rerun() # Rerun the app to fetch fresh data
+# if st.button("Refresh Budget Data 🔄", key="refresh_budget_data_button"):
+#     # Clear the cache for the get_current_month_expenses function
+#     st.cache_data.clear()
+#     st.rerun() # Rerun the app to fetch fresh data
 
 # Get user's expense categories
 user_categories_from_firestore = get_categories(db, user_id)
@@ -107,7 +107,7 @@ else:
                     budget_categories[cat]["recommended"] = default_val / monthly_income if monthly_income > 0 else 0
 
 
-st.subheader("Budget Categories")
+
 
 # --- Fetch current month's transactions for 'spent' calculation ---
 @st.cache_data(ttl=60) # Cache for 60 seconds
@@ -147,39 +147,6 @@ if not current_month_expenses_df.empty:
 for category_name, data in budget_categories.items():
     budget_categories[category_name]["spent"] = actual_spent_by_category.get(category_name, 0.0)
 
-# Display categories and allow user to adjust
-for category_name in expense_categories_list:
-    if category_name in budget_categories:
-        col1, col2, col3, col4 = st.columns([0.2, 0.3, 0.3, 0.2])
-        with col1:
-            st.markdown(f"**{category_name}**")
-        with col2:
-            budget_categories[category_name]["current"] = st.number_input(
-                f"Budget for {category_name}",
-                min_value=0.0,
-                value=float(budget_categories[category_name].get("current", 0.0)),
-                step=10.0,
-                format="%0.2f",
-                key=f"budget_{category_name}"
-            )
-            budget_categories[category_name]["budget"] = budget_categories[category_name]["current"]
-
-        with col3:
-            spent_amount = budget_categories[category_name].get("spent", 0.0)
-            st.markdown(f"Spent: {CURRENCY} {spent_amount:,.2f}")
-
-            budget_limit = budget_categories[category_name].get("budget", 0.0)
-            if budget_limit > 0:
-                progress = min(spent_amount / budget_limit, 1.0)
-                st.progress(progress)
-                if progress > 0.9:
-                    st.warning("⚠️ Near budget limit!")
-                elif progress >= 1.0:
-                    st.error("❌ Budget exceeded!")
-            else:
-                st.progress(0.0)
-                if spent_amount > 0:
-                    st.info("No budget set, but spending detected.")
 
 # Calculate totals
 total_budgeted = sum(data.get("budget", 0) for data in budget_categories.values())
@@ -207,6 +174,42 @@ with col3:
         f"{CURRENCY} {remaining_budget:,.2f}",
         f"{CURRENCY} {unallocated_income:,.2f} unallocated"
     )
+st.subheader("Budget Categories")
+# Display categories and allow user to adjust
+for category_name in expense_categories_list:
+    if category_name in budget_categories:
+        col1, col2 = st.columns([0.3, 0.7])
+        # with col1:
+        #     st.markdown(f"**{category_name}**")
+        with col1:
+            budget_categories[category_name]["current"] = st.number_input(
+                f"Budget for {category_name}",
+                min_value=0.0,
+                value=float(budget_categories[category_name].get("current", 0.0)),
+                step=10.0,
+                format="%0.2f",
+                key=f"budget_{category_name}"
+            )
+            budget_categories[category_name]["budget"] = budget_categories[category_name]["current"]
+
+        with col2:
+            spent_amount = budget_categories[category_name].get("spent", 0.0)
+            st.markdown(f"Spent: {CURRENCY} {spent_amount:,.2f}")
+
+            budget_limit = budget_categories[category_name].get("budget", 0.0)
+            if budget_limit > 0:
+                progress = min(spent_amount / budget_limit, 1.0)
+                st.progress(progress)
+                if progress > 0.9:
+                    st.warning("⚠️ Near budget limit!")
+                elif progress >= 1.0:
+                    st.error("❌ Budget exceeded!")
+            else:
+                st.progress(0.0)
+                if spent_amount > 0:
+                    st.info("No budget set, but spending detected.")
+
+
 
 # Save button
 if st.button("Save Budget", type="primary"):
@@ -217,6 +220,7 @@ if st.button("Save Budget", type="primary"):
     }
     update_budget(db, user_id, budget_data)
     st.success("Budget saved successfully!")
+    st.rerun()
 
 # Logout button
 st.sidebar.button("Logout", on_click=lambda: st.session_state.update({"logged_in": False}))
