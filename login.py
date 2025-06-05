@@ -129,7 +129,7 @@ if st.session_state.logged_in and not st.session_state.show_login_ui:
     """, unsafe_allow_html=True)
 else:
     # Show login UI
-    st.title("🔐 Welcome to Wallet Genie")
+    st.title("Welcome to Wallet Genie")
     st.markdown("Please Login or Sign Up to continue.")
 
     tab1, tab2 = st.tabs(["Login", "Sign Up"])
