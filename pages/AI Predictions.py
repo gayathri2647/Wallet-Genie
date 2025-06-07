@@ -141,12 +141,14 @@ def generate_sample_data():
 # Load data
 df = load_transaction_data()
 
+col1, col2, col3, col4 = st.columns(4)
 # model selection
-st.header("AI Model Selection")
-selected_model = st.selectbox(
-    "Choose Prediction Model",
-    ["Income/Expense Prediction", "Anomaly Detection", "Spending Behavior Clustering", "Future Expense Prediction"]
-)
+# st.header("AI Model Selection")    
+with col1:
+    selected_model = st.selectbox(
+        "Choose Prediction Model",
+        ["Income/Expense Prediction", "Anomaly Detection", "Spending Behavior Clustering", "Future Expense Prediction"]
+    )
 
 # Prepare data for models
 if not df.empty:

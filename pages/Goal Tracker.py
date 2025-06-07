@@ -32,7 +32,7 @@ user_id = st.session_state.user_id
 st.set_page_config(
     page_title="Goal Tracker - WalletGenie",
     page_icon="🎯",
-    layout="wide"  # Changed to wide layout for better spacing
+    layout="centered"  # Changed to wide layout for better spacing
 )
 
 # Custom CSS
@@ -40,7 +40,8 @@ st.markdown("""
     <style>
     .goal-card {
         background-color: #262730;
-        padding: 25px;
+        padding: 5px;
+        padding-left: 10px;
         border-radius: 12px;
         margin: 15px 0;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -84,10 +85,6 @@ st.markdown("""
         border-radius: 8px;
         margin-top: 10px;
     }
-    .stButton>button {
-        width: 100%;
-        margin: 5px 0;
-    }
     div.row-widget.stRadio > div {
         flex-direction: row;
         align-items: center;
@@ -118,8 +115,8 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Sidebar configuration
-with st.sidebar:
-    st.button("Logout", type="primary", on_click=lambda: st.session_state.update({"logged_in": False}))
+# Logout button
+st.sidebar.button("Logout", on_click=lambda: st.session_state.update({"logged_in": False}))
 
 # Main content
 st.title("Goal Tracker 🎯")
@@ -181,10 +178,14 @@ st.subheader("Your Goals")
 if not user_goals:
     st.info("You don't have any goals yet. Add your first goal above!")
 else:
-    for goal in user_goals:
+    # Sort goals by deadline (closest first)
+    for i, goal in enumerate(user_goals):
         # Convert deadline string back to date
         goal["deadline"] = datetime.fromisoformat(goal["deadline"]).date()
-        
+    
+    user_goals.sort(key=lambda x: x["deadline"])
+    
+    for goal in user_goals:
         # Calculate progress
         progress = goal["current"] / goal["target"] if goal["target"] > 0 else 0
         status_class = "on-track" if goal["on_track"] else "off-track"
@@ -199,8 +200,8 @@ else:
                 </div>
             """, unsafe_allow_html=True)
             
-            # Create three columns for better organization
-            col1, col2, col3 = st.columns([2, 1, 1])
+            # Create columns for better organization
+            col1, col2, col3 = st.columns([2, 0.8, 1.2])
             
             with col1:
                 st.markdown("### Progress")
@@ -231,31 +232,31 @@ else:
                     )
             
             with col3:
-                # Update goal form with improved styling
-                with st.expander("Update Goal"):
+                # Update goal form
+                update_col, delete_col = st.columns([2, 1])
+                
+                with update_col:
                     with st.form(key=f"update_goal_{goal['id']}"):
+                        # Store original value for comparison
+                        original_amount = float(goal["current"])
+                        
                         new_current = st.number_input(
-                            "Current Amount (₹)", 
+                            "Update Amount (₹)", 
                             min_value=0.0, 
-                            value=float(goal["current"]), 
+                            value=original_amount, 
                             step=50.0
                         )
                         
-                        col1, col2 = st.columns(2)
-                        with col1:
-                            update_submitted = st.form_submit_button(
-                                "Update",
-                                type="primary",
-                                use_container_width=True
-                            )
-                        with col2:
-                            delete_submitted = st.form_submit_button(
-                                "Delete",
-                                type="secondary",
-                                use_container_width=True
-                            )
+                        update_submitted = st.form_submit_button(
+                            "Update",
+                            type="primary",
+                            use_container_width=True
+                        )
                         
                         if update_submitted:
+                            # Calculate progress increment
+                            progress_increment = new_current - original_amount
+                            new_current += original_amount
                             # Recalculate if on track
                             days_left = (goal["deadline"] - datetime.now().date()).days
                             if days_left <= 0:
@@ -269,13 +270,24 @@ else:
                                 "current": new_current,
                                 "on_track": on_track
                             })
-                            st.success("Goal updated!")
+                            
+                            # Show appropriate message based on whether progress was added or reduced
+                            if progress_increment > 0:
+                                st.success(f"Goal updated! Added ₹{progress_increment:,.2f} to your progress.")
+                            elif progress_increment < 0:
+                                st.warning(f"Goal updated! Reduced progress by ₹{abs(progress_increment):,.2f}.")
+                            else:
+                                st.info("Goal updated! Progress amount unchanged.")
+                                
                             st.rerun()
-                        
-                        if delete_submitted:
-                            delete_goal(db, user_id, goal["id"])
-                            st.success("Goal deleted!")
-                            st.rerun()
+                
+                with delete_col:
+                    # Use a unique key for each delete button
+                    st.markdown("Delete")
+                    if st.button("🗑️", key=f"delete_goal_{goal['id']}", use_container_width=True):
+                        delete_goal(db, user_id, goal["id"])
+                        st.success("Goal deleted!")
+                        st.rerun()
 
     # Goal analytics with improved layout
     if len(user_goals) > 0:
@@ -286,23 +298,25 @@ else:
         progress_data = []
         for goal in user_goals:
             progress_data.append({
-                "Date": datetime.now(),
                 "Goal": goal["name"],
-                "Amount": goal["current"],
-                "Target": goal["target"]
+                "Current": goal["current"],
+                "Target": goal["target"],
+                "Deadline": goal["deadline"]
             })
         
         df_progress = pd.DataFrame(progress_data)
         
         if not df_progress.empty:
+            # Create a more informative chart
             fig = px.bar(
                 df_progress,
                 x="Goal",
-                y=["Amount", "Target"],
+                y=["Current", "Target"],
                 title="Current Goal Progress",
                 barmode="group",
                 template="plotly_dark",
-                color_discrete_sequence=["#00CC66", "#4A4A4A"]
+                color_discrete_sequence=["#00CC66", "#4A4A4A"],
+                hover_data=["Deadline"]
             )
             st.plotly_chart(fig, use_container_width=True)
         
@@ -330,7 +344,9 @@ else:
             )
         
         with col3:
-            avg_progress = sum(g["current"]/g["target"] for g in user_goals if g["target"] > 0) / len(user_goals) if user_goals else 0
+            # Calculate average progress correctly
+            progress_percentages = [g["current"]/g["target"] for g in user_goals if g["target"] > 0]
+            avg_progress = sum(progress_percentages) / len(progress_percentages) if progress_percentages else 0
             st.metric(
                 "Average Progress",
                 f"{avg_progress*100:.1f}%",

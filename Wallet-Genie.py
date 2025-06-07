@@ -3,11 +3,10 @@ import firebase_admin
 from firebase_admin import credentials, auth, firestore # Import auth and firestore
 import pyrebase
 import json
-from datetime import datetime
 import os
 import sys
-import requests
 import logging
+from config_loader import get_firebase_config, create_firebase_config_file
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -29,28 +28,32 @@ except Exception as e:
     st.stop()
 
 # Pyrebase config
-# Check if firebase_config.json exists
-if os.path.exists("firebase_config.json"):
+# Check if firebase_config.json exists, if not create it
+if not os.path.exists("firebase_config.json"):
     try:
-        with open("firebase_config.json") as f:
-            config = json.load(f)
-        firebase = pyrebase.initialize_app(config)
-        auth_pb = firebase.auth()
-        db_firestore = firestore.client() # Initialize Firestore client for user data
+        create_firebase_config_file()
     except Exception as e:
-        logging.error(f"Error initializing Pyrebase: {e}")
-        st.error("Failed to connect to authentication service. Please try again later.")
+        logging.error(f"Error creating firebase_config.json: {e}")
+        st.error("Failed to create Firebase configuration. Please check your environment variables or Streamlit secrets.")
         st.stop()
-else:
-    logging.error("firebase_config.json not found")
-    st.error("Authentication configuration missing. Please contact support.")
-    st.stop() # Stop the app if config is missing
+
+# Load Firebase config
+try:
+    with open("firebase_config.json") as f:
+        config = json.load(f)
+    firebase = pyrebase.initialize_app(config)
+    auth_pb = firebase.auth()
+    db_firestore = firestore.client() # Initialize Firestore client for user data
+except Exception as e:
+    logging.error(f"Error initializing Pyrebase: {e}")
+    st.error("Failed to connect to authentication service. Please try again later.")
+    st.stop()
 
 # Streamlit page config
 st.set_page_config(page_title="Wallet Genie - Login", page_icon="🔐", layout="centered")
 
 # Session state defaults
-for key in ["logged_in", "user_info", "authentication_status", "user_id", "email", "username", "show_login_ui"]: # Added "show_login_ui"
+for key in ["logged_in", "user_info", "authentication_status", "user_id", "email", "username", "show_login_ui"]:
     if key not in st.session_state:
         st.session_state[key] = None
         

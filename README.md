@@ -9,9 +9,9 @@ A smart personal finance management web application built with Streamlit and Fir
 - **Transaction Management**: Easy transaction entry with AI category prediction
 - **AI Predictions**: Smart spending forecasts and risk analysis
 - **Budget Planning**: Interactive budget management with recommendations
-- **Reports & Charts**: Comprehensive financial visualization
-- **Smart Sync**: Automatic transaction synchronization
+- **Transaction History**: Comprehensive view of past transactions
 - **Goal Tracking**: Set and monitor financial goals
+- **Settings**: Personalize your WalletGenie experience
 
 ## 🚀 Quick Start
 
@@ -23,13 +23,21 @@ cd wallet-genie
 
 2. Install dependencies:
 ```bash
-pip install -r requirement.txt
+pip install -r requirements.txt
 ```
 
 3. Set up Firebase:
 - Create a Firebase project at [Firebase Console](https://console.firebase.google.com)
-- Download the service account key and save as `wallet-3f13a-d7fbf39fbb1b.json`
-- Create `firebase_config.json` with your web app configuration
+- Download the service account key and save as `firebase_key.json`
+- For local development:
+  - Copy `.env.example` to `.env` and fill in your Firebase configuration, OR
+  - Create `.streamlit/secrets.toml` with your Firebase credentials (see `secrets.toml.example`)
+- Run `python -c "from config_loader import create_firebase_config_file; create_firebase_config_file()"` to generate the config file
+
+4. For Streamlit Cloud deployment:
+- Go to your app settings in the Streamlit Cloud dashboard
+- Navigate to the "Secrets" section
+- Add your Firebase credentials in the same format as in `secrets.toml.example`
 
 4. Run the application:
 ```bash
@@ -41,17 +49,20 @@ streamlit run login.py
 ```
 wallet-genie/
 ├── login.py                 # Authentication page
-├── auth_guard.py           # Authentication utilities
-├── firebase_config.json    # Firebase configuration
+├── auth_guard.py            # Authentication utilities
+├── firebase_config.json     # Firebase configuration
+├── firebase_key.json        # Firebase service account key
+├── config.py                # Application configuration
+├── shared_utils.py          # Shared utility functions
 ├── pages/
-│   ├── Dashboard.py        # Main dashboard
-│   ├── Add Transaction.py  # Transaction entry
-│   ├── AI Predictions.py   # Spending forecasts
-│   ├── Budget Planner.py   # Budget management
-│   ├── Reports & Charts.py # Financial reports
-│   ├── Smart Sync.py       # Auto synchronization
-│   └── Goal Tracker.py     # Goal management
-└── requirement.txt         # Python dependencies
+    ├── 1_Add Transaction.py # Transaction entry
+    ├── 2_Dashboard.py       # Main dashboard
+    ├── 3_Transaction History.py # Transaction history
+    ├── AI Predictions.py    # Spending forecasts and analysis
+    ├── Budget Planner.py    # Budget management
+    └── Goal Tracker.py      # Goal management
+    └── Settings.py          # Application settings
+
 ```
 
 ## 🔒 Authentication
@@ -73,25 +84,18 @@ The app uses Firebase Authentication for secure user management. Features includ
 
 - **Frontend**: Streamlit
 - **Authentication**: Firebase Auth
-- **Database**: Firebase Realtime Database (configured)
+- **Database**: Firebase Firestore
 - **Charts**: Plotly
 - **Data Processing**: Pandas, NumPy
+- **Machine Learning**: scikit-learn for predictions and clustering
 
-## 🔄 Smart Sync Feature
+## 📊 AI Prediction Features
 
-The Smart Sync feature provides:
-- Automatic transaction synchronization
-- Real-time balance updates
-- Connection status monitoring
-- Sync frequency configuration
-
-## 📊 Reports & Analytics
-
-Generate comprehensive financial reports with:
-- Monthly spending trends
-- Category-wise analysis
-- Custom date range selection
-- Downloadable PDF reports
+WalletGenie includes several AI-powered features:
+- **Income/Expense Prediction**: Forecast future financial patterns
+- **Anomaly Detection**: Identify unusual spending patterns
+- **Spending Behavior Clustering**: Group expenses by spending behavior
+- **Future Expense Prediction**: Category-specific spending forecasts
 
 ## 🎯 Goal Tracking
 
@@ -108,7 +112,6 @@ Track financial goals with:
 3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
-
 
 ## 🙏 Acknowledgments
 
