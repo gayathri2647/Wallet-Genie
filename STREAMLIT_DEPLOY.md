@@ -1,6 +1,6 @@
 # Streamlit Deployment Guide for WalletGenie
 
-This guide explains how to deploy WalletGenie to Streamlit Cloud.
+This guide explains how to deploy WalletGenie to Streamlit Cloud securely.
 
 ## Prerequisites
 
@@ -15,8 +15,7 @@ This guide explains how to deploy WalletGenie to Streamlit Cloud.
 Make sure your repository has the following files:
 - `requirements.txt` - Lists all Python dependencies
 - `.streamlit/config.toml` - Streamlit configuration
-- `.streamlit/secrets.toml.example` - Template for secrets
-- `runtime.txt` - Specifies Python version
+- `.gitignore` - Excludes sensitive files
 
 ### 2. Set Up Secrets in Streamlit Cloud
 
@@ -34,11 +33,7 @@ storage_bucket = "your_project_id.appspot.com"
 messaging_sender_id = "your_sender_id"
 app_id = "your_app_id"
 database_url = ""
-```
 
-5. Add your Firebase service account key in the following format:
-
-```toml
 [firebase_service_account]
 type = "service_account"
 project_id = "your_project_id"
@@ -52,56 +47,31 @@ auth_provider_x509_cert_url = "https://www.googleapis.com/oauth2/v1/certs"
 client_x509_cert_url = "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-xxxxx%40your-project-id.iam.gserviceaccount.com"
 ```
 
-### 3. Update Your Code for Streamlit Cloud
-
-You need to modify `firebase_init.py` to read the service account key from Streamlit secrets:
-
-```python
-import streamlit as st
-import firebase_admin
-from firebase_admin import credentials, firestore
-import json
-import os
-
-def init_firestore():
-    """Initialize Firestore client"""
-    # Check if running on Streamlit Cloud
-    if hasattr(st, 'secrets') and 'firebase_service_account' in st.secrets:
-        # Use service account from Streamlit secrets
-        service_account_info = dict(st.secrets["firebase_service_account"])
-        
-        # Create a temporary file with the service account info
-        with open("temp_key.json", "w") as f:
-            json.dump(service_account_info, f)
-        
-        # Initialize Firebase with the temporary file
-        cred = credentials.Certificate("temp_key.json")
-        
-        # Delete the temporary file
-        os.remove("temp_key.json")
-    else:
-        # Use local service account file
-        cred = credentials.Certificate("firebase_key.json")
-    
-    # Initialize Firebase if not already initialized
-    if not firebase_admin._apps:
-        firebase_admin.initialize_app(cred)
-    
-    # Return Firestore client
-    return firestore.client()
-```
-
-### 4. Deploy Your App
+### 3. Deploy Your App
 
 1. In Streamlit Cloud, click "Deploy"
 2. Select your repository, branch, and main file (`Wallet-Genie.py`)
 3. Click "Deploy"
 
-### 5. Verify Deployment
+### 4. Verify Deployment
 
 1. Wait for the deployment to complete
 2. Test your app by logging in and verifying that all features work
 3. Check the logs for any errors
+
+## Security Best Practices
+
+1. **NEVER commit sensitive files** to your repository:
+   - `firebase_key.json`
+   - `firebase_config.json`
+   - `.env`
+   - `.streamlit/secrets.toml`
+
+2. **Use .gitignore** to prevent accidental commits of sensitive files
+
+3. **Rotate your Firebase credentials** if they have ever been exposed
+
+4. **Set up Firebase Security Rules** to restrict access to your data
 
 ## Troubleshooting
 

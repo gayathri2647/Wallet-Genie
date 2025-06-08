@@ -17,7 +17,13 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 # Firebase Admin SDK initialization
 try:
     if not firebase_admin._apps: # Check if app is already initialized
-        cred = credentials.Certificate("firebase_key.json")
+        if hasattr(st, 'secrets') and 'firebase_service_account' in st.secrets:
+            # Use service account from Streamlit secrets
+            service_account_info = dict(st.secrets["firebase_service_account"])
+            cred = credentials.Certificate(service_account_info)
+        else:
+            # Use local service account file
+            cred = credentials.Certificate("firebase_key.json")
         firebase_admin.initialize_app(cred)
 except ValueError:
     logging.error("Firebase app already initialized")

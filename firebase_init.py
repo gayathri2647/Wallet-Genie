@@ -10,16 +10,7 @@ def init_firestore():
     if hasattr(st, 'secrets') and 'firebase_service_account' in st.secrets:
         # Use service account from Streamlit secrets
         service_account_info = dict(st.secrets["firebase_service_account"])
-        
-        # Create a temporary file with the service account info
-        with open("temp_key.json", "w") as f:
-            json.dump(service_account_info, f)
-        
-        # Initialize Firebase with the temporary file
-        cred = credentials.Certificate("temp_key.json")
-        
-        # Delete the temporary file
-        os.remove("temp_key.json")
+        cred = credentials.Certificate(service_account_info)
     else:
         # Use local service account file
         cred = credentials.Certificate("firebase_key.json")

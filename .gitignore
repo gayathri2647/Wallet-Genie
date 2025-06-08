@@ -1,8 +1,8 @@
 # Firebase credentials
 firebase_key.json
 firebase_config.json
-secrets.toml
 .env
+.streamlit/secrets.toml
 
 # Python
 __pycache__/
@@ -42,5 +42,4 @@ env/
 Thumbs.db
 
 # ML models
-models/
-*.pkl
+models/*.pkl
