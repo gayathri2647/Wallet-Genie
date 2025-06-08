@@ -300,9 +300,9 @@ if not df.empty:
             with col1:
                 st.info(f"""
                 📊 Forecast Summary:
-                - Average daily spend: ${np.mean(expense_predictions):.2f}
-                - Peak spend day: ${max(expense_predictions):.2f}
-                - Total forecast: ${sum(expense_predictions):.2f}
+                - Average daily spend: ₹{np.mean(expense_predictions):.2f}
+                - Peak spend day: ₹{max(expense_predictions):.2f}
+                - Total forecast: ₹{sum(expense_predictions):.2f}
                 """)
             
             with col2:
@@ -381,7 +381,7 @@ if not df.empty:
                     st.info(f"""
                     📊 Anomaly Statistics:
                     - Number of anomalies: {len(anomalies)}
-                    - Average anomaly amount: ${avg_anomaly:.2f}
+                    - Average anomaly amount: ₹{avg_anomaly:.2f}
                     - {abs(percent_diff):.1f}% {'higher' if percent_diff > 0 else 'lower'} than normal transactions
                     """)
                 
@@ -521,7 +521,7 @@ if not df.empty:
             if not high_spending.empty:
                 st.warning("**High Spending Categories:**")
                 for _, row in high_spending.iterrows():
-                    st.write(f"- {row['category']}: ${row['sum']:.2f} total, ${row['mean']:.2f} average per transaction")
+                    st.write(f"- {row['category']}: ₹{row['sum']:.2f} total, ₹{row['mean']:.2f} average per transaction")
             
             # Medium spending categories
             if n_clusters > 2:
@@ -529,14 +529,14 @@ if not df.empty:
                 if not medium_spending.empty:
                     st.info("**Medium Spending Categories:**")
                     for _, row in medium_spending.iterrows():
-                        st.write(f"- {row['category']}: ${row['sum']:.2f} total, ${row['mean']:.2f} average per transaction")
+                        st.write(f"- {row['category']}: ₹{row['sum']:.2f} total, ₹{row['mean']:.2f} average per transaction")
             
             # Low spending categories
             low_spending = category_expenses[category_expenses['spending_level'] == "Low Spending"]
             if not low_spending.empty:
                 st.success("**Low Spending Categories:**")
                 for _, row in low_spending.iterrows():
-                    st.write(f"- {row['category']}: ${row['sum']:.2f} total, ${row['mean']:.2f} average per transaction")
+                    st.write(f"- {row['category']}: ₹{row['sum']:.2f} total, ₹{row['mean']:.2f} average per transaction")
             
             # Recommendations based on clusters
             st.subheader("Recommendations")
@@ -697,9 +697,9 @@ if not df.empty:
                 with col1:
                     st.info(f"""
                     📊 Forecast Summary:
-                    - Total predicted spending: ${total_predicted:.2f}
-                    - Average daily spending: ${avg_predicted:.2f}
-                    - Highest predicted expense: ${max_predicted:.2f} on {max_date}
+                    - Total predicted spending: ₹{total_predicted:.2f}
+                    - Average daily spending: ₹{avg_predicted:.2f}
+                    - Highest predicted expense: ₹{max_predicted:.2f} on {max_date}
                     """)
                 
                 with col2:
