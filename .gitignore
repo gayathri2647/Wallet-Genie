@@ -1,12 +1,6 @@
-# Environment variables
-.env
-
-# Firebase configuration
-firebase_config.json
+# Firebase credentials
 firebase_key.json
-
-# Streamlit secrets
-.streamlit/secrets.toml
+firebase_config.json
 
 # Python
 __pycache__/
@@ -41,6 +35,10 @@ env/
 *.swp
 *.swo
 
-# OS specific files
+# OS specific
 .DS_Store
 Thumbs.db
+
+# ML models
+models/
+*.pkl

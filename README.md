@@ -28,7 +28,8 @@ pip install -r requirements.txt
 
 3. Set up Firebase:
 - Create a Firebase project at [Firebase Console](https://console.firebase.google.com)
-- Download the service account key and save as `firebase_key.json`
+- Download the service account key and save as `firebase_key.json` (use `firebase_key.example.json` as a template)
+- **IMPORTANT**: Never commit your actual Firebase credentials to a public repository!
 - For local development:
   - Copy `.env.example` to `.env` and fill in your Firebase configuration, OR
   - Create `.streamlit/secrets.toml` with your Firebase credentials (see `secrets.toml.example`)
@@ -50,8 +51,9 @@ streamlit run Wallet-Genie.py
 wallet-genie/
 ├── Wallet-Genie.py          # Authentication page
 ├── auth_guard.py            # Authentication utilities
-├── firebase_config.json     # Firebase configuration
-├── firebase_key.json        # Firebase service account key
+├── firebase_config.example.json  # Example Firebase configuration (template)
+├── firebase_key.example.json     # Example Firebase service account key (template)
+├── .gitignore                    # Git ignore file to exclude sensitive files
 ├── config.py                # Application configuration
 ├── shared_utils.py          # Shared utility functions
 ├── pages/
