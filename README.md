@@ -118,3 +118,13 @@ Track financial goals with:
 - Streamlit for the amazing framework
 - Firebase for authentication and database services
 - The open-source community for inspiration and resources
+
+## 👥 Project Contributors
+
+This project was developed by:
+
+
+- [**Yugesh A**](https://github.com/Yugesh-003) — Developer, Backend Integration
+- [**Gayathri Prasad M N**](https://github.com/gayathri2647) — Developer, UI Design  
+
+We worked together to build, design, and implement the features of this project.
