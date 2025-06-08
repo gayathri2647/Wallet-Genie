@@ -22,10 +22,12 @@ try:
             service_account_info = dict(st.secrets["firebase_service_account"])
             cred = credentials.Certificate(service_account_info)
             firebase_admin.initialize_app(cred)
+            logging.info("Firebase initialized using Streamlit secrets")
         elif os.path.exists("firebase_key.json"):
             # Use local service account file if it exists
             cred = credentials.Certificate("firebase_key.json")
             firebase_admin.initialize_app(cred)
+            logging.info("Firebase initialized using local key file")
         else:
             logging.error("No Firebase credentials found")
             st.error("Firebase credentials not found. Please check your configuration.")
@@ -43,6 +45,7 @@ except Exception as e:
 if not os.path.exists("firebase_config.json"):
     try:
         create_firebase_config_file()
+        logging.info("Created firebase_config.json file")
     except Exception as e:
         logging.error(f"Error creating firebase_config.json: {e}")
         st.error("Failed to create Firebase configuration. Please check your environment variables or Streamlit secrets.")
@@ -50,8 +53,24 @@ if not os.path.exists("firebase_config.json"):
 
 # Load Firebase config
 try:
-    with open("firebase_config.json") as f:
-        config = json.load(f)
+    if hasattr(st, 'secrets') and 'firebase' in st.secrets:
+        # Use config from Streamlit secrets
+        config = {
+            "apiKey": st.secrets.firebase.api_key,
+            "authDomain": st.secrets.firebase.auth_domain,
+            "projectId": st.secrets.firebase.project_id,
+            "storageBucket": st.secrets.firebase.storage_bucket,
+            "messagingSenderId": st.secrets.firebase.messaging_sender_id,
+            "appId": st.secrets.firebase.app_id,
+            "databaseURL": st.secrets.firebase.get("database_url", "")
+        }
+        logging.info("Firebase config loaded from Streamlit secrets")
+    else:
+        # Use local config file
+        with open("firebase_config.json") as f:
+            config = json.load(f)
+        logging.info("Firebase config loaded from local file")
+    
     firebase = pyrebase.initialize_app(config)
     auth_pb = firebase.auth()
     db_firestore = firestore.client() # Initialize Firestore client for user data

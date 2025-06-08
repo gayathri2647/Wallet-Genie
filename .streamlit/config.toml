@@ -6,7 +6,7 @@ textColor="#262730"
 font="sans serif"
 
 [server]
-enableStaticServing = true
+enableStaticServing = false
 
 [browser]
 gatherUsageStats = false
