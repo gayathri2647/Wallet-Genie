@@ -41,8 +41,22 @@ except Exception as e:
     st.stop()
 
 # Pyrebase config
-# Check if firebase_config.json exists, if not create it
-if not os.path.exists("firebase_config.json"):
+# For Streamlit Cloud, we'll use secrets directly without creating a file
+firebase_config = None
+if hasattr(st, 'secrets') and 'firebase' in st.secrets:
+    # Use config directly from Streamlit secrets
+    firebase_config = {
+        "apiKey": st.secrets.firebase.api_key,
+        "authDomain": st.secrets.firebase.auth_domain,
+        "projectId": st.secrets.firebase.project_id,
+        "storageBucket": st.secrets.firebase.storage_bucket,
+        "messagingSenderId": st.secrets.firebase.messaging_sender_id,
+        "appId": st.secrets.firebase.app_id,
+        "databaseURL": st.secrets.firebase.get("database_url", "")
+    }
+    logging.info("Firebase config loaded from Streamlit secrets")
+# For local development, check if firebase_config.json exists, if not create it
+elif not os.path.exists("firebase_config.json"):
     try:
         create_firebase_config_file()
         logging.info("Created firebase_config.json file")
@@ -53,7 +67,10 @@ if not os.path.exists("firebase_config.json"):
 
 # Load Firebase config
 try:
-    if hasattr(st, 'secrets') and 'firebase' in st.secrets:
+    if firebase_config:
+        # Use config already loaded from Streamlit secrets
+        config = firebase_config
+    elif hasattr(st, 'secrets') and 'firebase' in st.secrets:
         # Use config from Streamlit secrets
         config = {
             "apiKey": st.secrets.firebase.api_key,
@@ -65,11 +82,24 @@ try:
             "databaseURL": st.secrets.firebase.get("database_url", "")
         }
         logging.info("Firebase config loaded from Streamlit secrets")
-    else:
+    elif os.path.exists("firebase_config.json"):
         # Use local config file
         with open("firebase_config.json") as f:
             config = json.load(f)
         logging.info("Firebase config loaded from local file")
+    else:
+        logging.error("No Firebase configuration found")
+        st.error("Firebase configuration not found. Please add Firebase credentials to Streamlit secrets.")
+        st.stop()
+    
+    # Verify config has required fields
+    required_keys = ["apiKey", "authDomain", "projectId", "storageBucket", "messagingSenderId", "appId"]
+    missing_keys = [key for key in required_keys if not config.get(key)]
+    if missing_keys:
+        error_msg = f"Missing required Firebase configuration: {', '.join(missing_keys)}"
+        logging.error(error_msg)
+        st.error(f"Firebase configuration incomplete. {error_msg}")
+        st.stop()
     
     firebase = pyrebase.initialize_app(config)
     auth_pb = firebase.auth()
