@@ -124,7 +124,7 @@ Track financial goals with:
 This project was developed by:
 
 
-- [**Yugesh A**](https://github.com/Yugesh-003) — Developer, Backend Integration
 - [**Gayathri Prasad M N**](https://github.com/gayathri2647) — Developer, UI Design  
+- [**Yugesh A**](https://github.com/Yugesh-003) — Developer, Backend Integration
 
 We worked together to build, design, and implement the features of this project.
