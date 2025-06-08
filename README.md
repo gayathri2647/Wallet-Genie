@@ -41,14 +41,14 @@ pip install -r requirements.txt
 
 4. Run the application:
 ```bash
-streamlit run login.py
+streamlit run Wallet-Genie.py
 ```
 
 ## 📂 Project Structure
 
 ```
 wallet-genie/
-├── login.py                 # Authentication page
+├── Wallet-Genie.py          # Authentication page
 ├── auth_guard.py            # Authentication utilities
 ├── firebase_config.json     # Firebase configuration
 ├── firebase_key.json        # Firebase service account key
