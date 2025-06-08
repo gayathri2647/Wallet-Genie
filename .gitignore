@@ -1,6 +1,8 @@
 # Firebase credentials
 firebase_key.json
 firebase_config.json
+secrets.toml
+.env
 
 # Python
 __pycache__/
