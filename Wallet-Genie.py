@@ -8,7 +8,6 @@ import sys
 from dotenv import load_dotenv
 import requests
 import logging
-from config_loader import get_firebase_config
 
 # Load environment variables
 load_dotenv()
@@ -115,19 +114,19 @@ def login_user(email, password):
         st.rerun()
     except Exception as e:
         # Log detailed error for debugging
-        # logging.error(f"Login error: {str(e)}")
+        logging.error(f"Login error: {str(e)}")
         # st.error(f"Error : {str(e)}")
         # Show user-friendly message
-        ####st.error("Login failed. Please check your email and password.")
-        try:
-            error_json = e.args[0].response.json()
-            error_message = error_json['error']['message']
-            st.error(f"Login failed: {error_message}")
-            logging.error(f"Login failed: {error_message}")
-        except Exception as inner_e:
-            # fallback if we can't parse the error JSON
-            st.error("Login failed. Please check your email and password.")
-            logging.error(f"Unexpected login error: {str(inner_e)} | Original error: {str(e)}")
+        st.error("Login failed. Please check your email and password.")
+        # try:
+        #     error_json = e.args[0].response.json()
+        #     error_message = error_json['error']['message']
+        #     st.error(f"Login failed: {error_message}")
+        #     logging.error(f"Login failed: {error_message}")
+        # except Exception as inner_e:
+        #     # fallback if we can't parse the error JSON
+        #     st.error("Login failed. Please check your email and password.")
+        #     logging.error(f"Unexpected login error: {str(inner_e)} | Original error: {str(e)}")
 
 def signup_user(email, password, display_name): # Added display_name parameter
     try:
@@ -145,9 +144,9 @@ def signup_user(email, password, display_name): # Added display_name parameter
         st.success("Account created successfully! Please login.")
     except Exception as e:
         logging.error(f"Signup error: {str(e)}")
-        st.error(f"Error : {str(e)}")
+       # st.error(f"Error : {str(e)}")
         
-        #st.error("Account creation failed. Please try again with a different email or stronger password.")
+        st.error("Account creation failed. Please try again with a different email or stronger password.")
 
 # Main UI
 if st.session_state.logged_in and not st.session_state.show_login_ui:
