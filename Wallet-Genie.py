@@ -50,8 +50,7 @@ except Exception as e:
 
 # Load Firebase config
 try:
-    # with open("firebase_config.json") as f:
-    #     config = json.load(f)
+    
     config = {
         "apiKey": st.secrets["firebase"]["api_key"],
         "authDomain": st.secrets["firebase"]["auth_domain"],

@@ -28,10 +28,9 @@ pip install -r requirements.txt
 
 3. Set up Firebase:
 - Create a Firebase project at [Firebase Console](https://console.firebase.google.com)
-- Download the service account key and save as `firebase_key.json`
 - For local development:
-  - Copy `.env.example` to `.env` and fill in your Firebase configuration, OR
   - Create `.streamlit/secrets.toml` with your Firebase credentials (see `secrets.toml.example`)
+  - Include both Firebase web config and service account credentials in the secrets file
 - Run `python -c "from config_loader import create_firebase_config_file; create_firebase_config_file()"` to generate the config file
 
 4. For Streamlit Cloud deployment:
@@ -51,7 +50,8 @@ wallet-genie/
 ├── login.py                 # Authentication page
 ├── auth_guard.py            # Authentication utilities
 ├── firebase_config.json     # Firebase configuration
-├── firebase_key.json        # Firebase service account key
+├── .streamlit/
+    └── secrets.toml        # Firebase credentials and secrets
 ├── config.py                # Application configuration
 ├── shared_utils.py          # Shared utility functions
 ├── pages/

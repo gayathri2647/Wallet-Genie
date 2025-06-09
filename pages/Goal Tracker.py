@@ -19,10 +19,22 @@ check_auth()
 # Initialize Firebase
 if not firebase_admin._apps:
     try:
-        cred = firebase_admin.credentials.Certificate("firebase_key.json")
+        cred = firebase_admin.credentials.Certificate({
+            "type": st.secrets["firebase_service_account"]["type"],
+            "project_id": st.secrets["firebase_service_account"]["project_id"],
+            "private_key_id": st.secrets["firebase_service_account"]["private_key_id"],
+            "private_key": st.secrets["firebase_service_account"]["private_key"],
+            "client_email": st.secrets["firebase_service_account"]["client_email"],
+            "client_id": st.secrets["firebase_service_account"]["client_id"],
+            "auth_uri": st.secrets["firebase_service_account"]["auth_uri"],
+            "token_uri": st.secrets["firebase_service_account"]["token_uri"],
+            "auth_provider_x509_cert_url": st.secrets["firebase_service_account"]["auth_provider_x509_cert_url"],
+            "client_x509_cert_url": st.secrets["firebase_service_account"]["client_x509_cert_url"],
+            "universe_domain": st.secrets["firebase_service_account"]["universe_domain"]
+        })
         firebase_admin.initialize_app(cred)
     except Exception as e:
-        st.error(f"Error initializing Firebase: {e}. Please ensure 'firebase_key.json' is correctly placed and valid.")
+        st.error(f"Error initializing Firebase: {e}. Please ensure '.streamlit/secrets.toml' is correctly configured.")
         st.stop()
 
 db = firestore.client()
