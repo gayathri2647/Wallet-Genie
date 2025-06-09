@@ -31,20 +31,3 @@ def get_firebase_config():
             "databaseURL": os.getenv("FIREBASE_DATABASE_URL", "")
         }
 
-def create_firebase_config_file():
-    """
-    Create firebase_config.json file from environment variables or Streamlit secrets
-    """
-    config = get_firebase_config()
-    
-    # Check if all required values are present
-    required_keys = ["apiKey", "authDomain", "projectId", "storageBucket", "messagingSenderId", "appId"]
-    missing_keys = [key for key in required_keys if not config.get(key)]
-    
-    if missing_keys:
-        raise ValueError(f"Missing required Firebase configuration: {', '.join(missing_keys)}")
-    
-    with open("firebase_config.json", "w") as f:
-        json.dump(config, f, indent=2)
-    
-    return True

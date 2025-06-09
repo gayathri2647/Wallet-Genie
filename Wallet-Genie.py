@@ -5,8 +5,13 @@ import pyrebase
 import json
 import os
 import sys
+from dotenv import load_dotenv
+import requests
 import logging
-from config_loader import get_firebase_config, create_firebase_config_file
+from config_loader import get_firebase_config
+
+# Load environment variables
+load_dotenv()
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -14,22 +19,26 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 # Add current directory to sys.path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-# Firebase Admin SDK initialization
+
+
 try:
     if not firebase_admin._apps: # Check if app is already initialized
-        if hasattr(st, 'secrets') and 'firebase_service_account' in st.secrets:
-            # Use service account from Streamlit secrets
-            service_account_info = dict(st.secrets["firebase_service_account"])
-            cred = credentials.Certificate(service_account_info)
-            firebase_admin.initialize_app(cred)
-        elif os.path.exists("firebase_key.json"):
-            # Use local service account file if it exists
-            cred = credentials.Certificate("firebase_key.json")
-            firebase_admin.initialize_app(cred)
-        else:
-            logging.error("No Firebase credentials found")
-            st.error("Firebase credentials not found. Please check your configuration.")
-            st.stop()
+        cred = credentials.Certificate({
+        "type": st.secrets["firebase_service_account"]["type"],
+        "project_id": st.secrets["firebase_service_account"]["project_id"],
+        "private_key_id": st.secrets["firebase_service_account"]["private_key_id"],
+        "private_key": st.secrets["firebase_service_account"]["private_key"],
+        "client_email": st.secrets["firebase_service_account"]["client_email"],
+        "client_id": st.secrets["firebase_service_account"]["client_id"],
+        "auth_uri": st.secrets["firebase_service_account"]["auth_uri"],
+        "token_uri": st.secrets["firebase_service_account"]["token_uri"],
+        "auth_provider_x509_cert_url": st.secrets["firebase_service_account"]["auth_provider_x509_cert_url"],
+        "client_x509_cert_url": st.secrets["firebase_service_account"]["client_x509_cert_url"],
+        "universe_domain": st.secrets["firebase_service_account"]["universe_domain"]
+        })
+        #print("hehe :",st.secrets["firebase"]["project_id"])
+
+        firebase_admin.initialize_app(cred)
 except ValueError:
     logging.error("Firebase app already initialized")
     pass
@@ -38,20 +47,20 @@ except Exception as e:
     st.error("Failed to initialize authentication service. Please try again later.")
     st.stop()
 
-# Pyrebase config
-# Check if firebase_config.json exists, if not create it
-if not os.path.exists("firebase_config.json"):
-    try:
-        create_firebase_config_file()
-    except Exception as e:
-        logging.error(f"Error creating firebase_config.json: {e}")
-        st.error("Failed to create Firebase configuration. Please check your environment variables or Streamlit secrets.")
-        st.stop()
 
 # Load Firebase config
 try:
-    with open("firebase_config.json") as f:
-        config = json.load(f)
+    # with open("firebase_config.json") as f:
+    #     config = json.load(f)
+    config = {
+        "apiKey": st.secrets["firebase"]["api_key"],
+        "authDomain": st.secrets["firebase"]["auth_domain"],
+        "projectId": st.secrets["firebase"]["project_id"],
+        "storageBucket": st.secrets["firebase"]["storage_bucket"],
+        "messagingSenderId": st.secrets["firebase"]["messaging_sender_id"],
+        "appId": st.secrets["firebase"]["app_id"],
+        "databaseURL": st.secrets["firebase"]["database_url"]
+        }
     firebase = pyrebase.initialize_app(config)
     auth_pb = firebase.auth()
     db_firestore = firestore.client() # Initialize Firestore client for user data
@@ -74,11 +83,12 @@ if st.session_state.show_login_ui is None:
 
 # 🔒 Email/Password Login
 def login_user(email, password):
+    #print(email,password)
     try:
         user = auth_pb.sign_in_with_email_and_password(email, password)
         account_info = auth_pb.get_account_info(user['idToken'])
         user_id = account_info['users'][0]['localId']
-
+        #print(auth.idToken.toString())
         # Get Firebase Auth user record to retrieve display_name
         firebase_user = auth.get_user(user_id)
         display_name = firebase_user.display_name if firebase_user.display_name else email.split('@')[0]
@@ -106,9 +116,19 @@ def login_user(email, password):
         st.rerun()
     except Exception as e:
         # Log detailed error for debugging
-        logging.error(f"Login error: {str(e)}")
+        # logging.error(f"Login error: {str(e)}")
+        # st.error(f"Error : {str(e)}")
         # Show user-friendly message
-        st.error("Login failed. Please check your email and password.")
+        ####st.error("Login failed. Please check your email and password.")
+        try:
+            error_json = e.args[0].response.json()
+            error_message = error_json['error']['message']
+            st.error(f"Login failed: {error_message}")
+            logging.error(f"Login failed: {error_message}")
+        except Exception as inner_e:
+            # fallback if we can't parse the error JSON
+            st.error("Login failed. Please check your email and password.")
+            logging.error(f"Unexpected login error: {str(inner_e)} | Original error: {str(e)}")
 
 def signup_user(email, password, display_name): # Added display_name parameter
     try:
@@ -126,7 +146,9 @@ def signup_user(email, password, display_name): # Added display_name parameter
         st.success("Account created successfully! Please login.")
     except Exception as e:
         logging.error(f"Signup error: {str(e)}")
-        st.error("Account creation failed. Please try again with a different email or stronger password.")
+        st.error(f"Error : {str(e)}")
+        
+        #st.error("Account creation failed. Please try again with a different email or stronger password.")
 
 # Main UI
 if st.session_state.logged_in and not st.session_state.show_login_ui:

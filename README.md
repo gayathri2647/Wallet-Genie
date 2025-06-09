@@ -28,8 +28,7 @@ pip install -r requirements.txt
 
 3. Set up Firebase:
 - Create a Firebase project at [Firebase Console](https://console.firebase.google.com)
-- Download the service account key and save as `firebase_key.json` (use `firebase_key.example.json` as a template)
-- **IMPORTANT**: Never commit your actual Firebase credentials to a public repository!
+- Download the service account key and save as `firebase_key.json`
 - For local development:
   - Copy `.env.example` to `.env` and fill in your Firebase configuration, OR
   - Create `.streamlit/secrets.toml` with your Firebase credentials (see `secrets.toml.example`)
@@ -42,18 +41,17 @@ pip install -r requirements.txt
 
 4. Run the application:
 ```bash
-streamlit run Wallet-Genie.py
+streamlit run login.py
 ```
 
 ## 📂 Project Structure
 
 ```
 wallet-genie/
-├── Wallet-Genie.py          # Authentication page
+├── login.py                 # Authentication page
 ├── auth_guard.py            # Authentication utilities
-├── firebase_config.example.json  # Example Firebase configuration (template)
-├── firebase_key.example.json     # Example Firebase service account key (template)
-├── .gitignore                    # Git ignore file to exclude sensitive files
+├── firebase_config.json     # Firebase configuration
+├── firebase_key.json        # Firebase service account key
 ├── config.py                # Application configuration
 ├── shared_utils.py          # Shared utility functions
 ├── pages/
@@ -120,13 +118,3 @@ Track financial goals with:
 - Streamlit for the amazing framework
 - Firebase for authentication and database services
 - The open-source community for inspiration and resources
-
-## 👥 Project Contributors
-
-This project was developed by:
-
-
-- [**Gayathri Prasad M N**](https://github.com/gayathri2647) — Developer, UI Design  
-- [**Yugesh A**](https://github.com/Yugesh-003) — Developer, Backend Integration
-
-We worked together to build, design, and implement the features of this project.
