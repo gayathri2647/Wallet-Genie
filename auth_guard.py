@@ -17,4 +17,4 @@ def get_username():
         return st.session_state.username
     elif st.session_state.get('email'):
         return st.session_state.email.split('@')[0]
-    return 'Guest' # Fallback if no username or email is available
+    return 'Guest' # Fallback if no username or email is available.

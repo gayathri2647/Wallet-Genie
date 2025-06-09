@@ -1,4 +1,3 @@
-# shared_utils.py
 # Shared utilities for WalletGenie app to ensure consistent data access across pages
 
 def get_categories(db, uid):

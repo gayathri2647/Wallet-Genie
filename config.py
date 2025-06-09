@@ -3,7 +3,7 @@ Global configuration settings for the WalletGenie application.
 """
 
 # Currency settings
-CURRENCY = "₹"  # Indian Rupee symbol
+CURRENCY = "₹"  # Indian Rupee symbol.
 CURRENCY_CODE = "INR"
 
 # Theme settings
